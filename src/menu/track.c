@@ -517,7 +517,7 @@ void eof_prepare_track_menu(void)
 		}
 
 		/* Track>Search>Note name */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		if(eof_track_is_vocal_track(eof_song, eof_selected_track))
 		{	//If a vocal track is active
 			snprintf(eof_note_name_find_next_menu_name, sizeof(eof_note_name_find_next_menu_name) - 1, "&Lyric text");
 			snprintf(eof_note_name_search_dialog_title, sizeof(eof_note_name_search_dialog_title) - 1, "Find next lyric containing this text");

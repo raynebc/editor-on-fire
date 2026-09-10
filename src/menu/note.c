@@ -12553,7 +12553,7 @@ int eof_menu_note_reflect(char function)
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if((function & 1) && (eof_song->track[eof_selected_track]->track_format != EOF_VOCAL_TRACK_FORMAT))
+	if((function & 1) && !eof_track_is_vocal_track(eof_song, eof_selected_track))
 	{	//Perform vertical reflect (unless a vocal track is active)
 		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)

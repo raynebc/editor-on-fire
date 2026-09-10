@@ -1462,7 +1462,7 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 		return 0;	//Error
 
 	//Store the active difficulty number into the appropriate variable
-	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(eof_song, eof_selected_track))
 	{	//If a vocal track is active
 		eof_note_type_v = eof_note_type;	//Store the active difficulty number into the vocal difficulty variable
 	}
@@ -1478,7 +1478,7 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 			eof_track_selected_menu[i].flags = 0;
 		}
 
-		if(eof_song->track[tracknum]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		if(eof_track_is_vocal_track(eof_song, tracknum))
 		{
 			eof_vocals_selected = 1;
 			eof_note_type = eof_note_type_v;	//Retrieve the difficulty number last in effect when the vocal track was last active

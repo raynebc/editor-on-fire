@@ -4075,7 +4075,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	//Validate parameters
 	if(!sp || (track >= sp->tracks) || (sp->beats < 2) || !fn)
 		return 1;	//Invalid parameters
-	if((sp->track[track]->track_format != EOF_VOCAL_TRACK_FORMAT) && !eof_track_is_ghl_mode(sp, track))
+	if(!eof_track_is_vocal_track(sp, track) && !eof_track_is_ghl_mode(sp, track))
 	{	//For now, only export vocals and legacy GHL mode guitar/bass
 		return 1;	//Invalid parameters
 	}
@@ -4133,7 +4133,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 			numevents++;	//It will export as a section event
 		}
 	}
-	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(sp, track))
 	{	//If a vocal track is being exported
 		for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 		{	//For each lyric
@@ -4183,7 +4183,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	eventindex++;
 
 	//Add the track specific events to the list
-	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(sp, track))
 	{	//If a vocal track is being exported
 		char *old_string = NULL, *new_string = NULL;
 		int prefix = 0;

@@ -6311,7 +6311,7 @@ void eof_render_editor_window(EOF_WINDOW *window)
 		return;											//Return immediately
 
 //	eof_log("\tRendering piano roll.", 3);
-	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(eof_song, eof_selected_track))
 	{	//If this is a vocal track
 		eof_render_vocal_editor_window(window);
 		return;
@@ -6356,7 +6356,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	int ny;
 	int red = 0;
 
-	if(!eof_song_loaded || (eof_song->track[eof_selected_track]->track_format != EOF_VOCAL_TRACK_FORMAT) || !window)
+	if(!eof_song_loaded || !eof_track_is_vocal_track(eof_song, eof_selected_track) || !window)
 		return;
 	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the disabled the 2D window's rendering (or enabled full screen 3D view)
 		return;											//Return immediately

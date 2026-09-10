@@ -2763,7 +2763,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		length = eof_get_note_length(sp, track1, note1);
 		length2 = eof_get_note_length(sp, track2, note2);
 		if(thorough > 3)
-		{	//If the notes must be within 3ms
+		{	//If the notes must be within 3ms in length
 			if(length > length2)
 			{	//If the first note is longer
 				if(length2 + 3 < length)

@@ -1333,7 +1333,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	for(i = 0; i < tracksize; i++)
 	{
 		note_type = eof_get_note_type(sp, track, i);
-		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		if(eof_track_is_vocal_track(sp, track))
 		{
 			if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
 			{
@@ -2831,7 +2831,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			break;
 		}
 	}//Legacy track format
-	else if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	else if(eof_track_is_vocal_track(sp, track))
 	{	//Vocal track format
 		EOF_VOCAL_TRACK *tp = sp->vocal_track[tracknum];
 
@@ -3046,7 +3046,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		return eof_track_add_star_power_path(sp, track, start, end);
 
 		case EOF_LYRIC_PHRASE_SECTION:	//Lyric Phrase section
-			if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+			if(eof_track_is_vocal_track(sp, track))
 			{	//Lyric phrases are only valid for vocal tracks
 				int retval = eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, flags, difficulty);
 				if(retval)
@@ -7628,7 +7628,7 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option)
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 
-	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(sp, track))
 		return;	//Vocal tracks don't have the capability to have "crazy" notes
 
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
@@ -7663,7 +7663,7 @@ void eof_track_find_disjointed_notes(EOF_SONG *sp, unsigned long track)
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 
-	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(sp, track))
 		return;	//Vocal tracks don't have the capability to have disjointed notes
 
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
@@ -9121,7 +9121,7 @@ unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(sp, track))
 	{
 		return sp->vocal_track[tracknum]->lines;
 	}
@@ -9137,7 +9137,7 @@ EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, uns
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(sp, track))
 	{
 		if(sectionnum < EOF_MAX_LYRIC_LINES)
 		{
@@ -9781,6 +9781,19 @@ int eof_track_is_pro_guitar_track(EOF_SONG *sp, unsigned long track)
 
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar track
+		return 1;
+	}
+
+	return 0;
+}
+
+int eof_track_is_vocal_track(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	{	//If this is a vocal track
 		return 1;
 	}
 
@@ -11068,7 +11081,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 		eof_set_num_trills(sp, track, 0);
 		eof_set_num_sliders(sp, track, 0);
 
-		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		if(eof_track_is_vocal_track(sp, track))
 		{
 			sp->vocal_track[tracknum]->lines = 0;
 		}

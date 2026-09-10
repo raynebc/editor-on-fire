@@ -4752,7 +4752,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	{
 		unsigned long linenum = 0xFFFFFFFF;	//If a lyric is being copied to the clipboard, and it is in a lyric line, this number will change to reflect that line number
 
-		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		if(eof_track_is_vocal_track(sp, track))
 		{	//If this is a lyric, obtain lyric line data to be written to the clipboard
 			EOF_VOCAL_TRACK *tp = sp->vocal_track[tracknum];
 			unsigned long pos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, note);

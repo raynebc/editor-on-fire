@@ -3372,7 +3372,7 @@ void eof_render_fret_catalog_window(void)
 			vline(eof_window_info->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_lane_line);
 
 			// render information about the entry
-			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->track_format != EOF_VOCAL_TRACK_FORMAT)
+			if(!eof_track_is_vocal_track(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].flags))
 			{	//If the catalog entry is not from a vocal track, determine the name of the active difficulty
 				if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 				{	//If this track is not limited to 5 difficulties
@@ -3745,7 +3745,7 @@ void eof_render_3d_window(void)
 		return;	//Don't draw the 3D window
 	}
 
-	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(eof_song, eof_selected_track))
 	{	//If this is a vocal track
 		eof_render_lyric_window();
 		return;

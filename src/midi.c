@@ -1712,7 +1712,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 		}//If this is a legacy track
 
-		else if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		else if(eof_track_is_vocal_track(sp, j))
 		{	//If this is a vocal track
 			#define EOF_LYRIC_PHRASE_PADDING 0
 			///EOF_LYRIC_PHRASE_PADDING was originally implemented with a value of 5 for the sake of working around bugs in FoFiX, but unless modern rhythm games are found to have similar needs, it isn't worth maintaining this legacy workaround
@@ -2927,7 +2927,7 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 	if(!sp || !track || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || !pitches)
 		return 0;	//Invalid parameters
 
-	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	if(eof_track_is_vocal_track(sp, track))
 	{	//This is a vocal track
 		notenote = eof_get_note_note(sp, track, note);
 		if(notenote && (notenote != VOCALPERCUSSION))
@@ -3056,12 +3056,12 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 
 			if(eof_get_track_size_normal(sp, j) == 0)	//If this track has no notes (in the normal note set)
 				continue;	//Skip the track
-			if((!eof_track_is_pro_guitar_track(sp, j)) && (sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT) && !eof_track_is_drum(sp, j))	//If this isn't a vocal, pro guitar or drum track
+			if((!eof_track_is_pro_guitar_track(sp, j)) && !eof_track_is_vocal_track(sp, j) && !eof_track_is_drum(sp, j))	//If this isn't a vocal, pro guitar or drum track
 				continue;	//Skip the track
 			if(eof_track_overridden_by_stored_MIDI_track(sp, j))	//If this track is overridden by a stored MIDI track
 				continue;	//Skip the track
 
-			if(passnum && (sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT))
+			if(passnum && eof_track_is_vocal_track(sp, j))
 				continue;	//Don't write the vocal track during the Fretlight pass
 			if(passnum && eof_track_is_drum(sp, j))
 				continue;	//Don't write the drum track during the Fretlight pass
@@ -3286,7 +3286,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					}
 
 					//Write note name or lyric text if applicable
-					if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
+					if(eof_track_is_vocal_track(sp, j))
 					{	//If a lyric is being exported
 						name = eof_get_note_name(sp, j, i);
 						if(name && (name[0] != '\0'))
@@ -4697,7 +4697,7 @@ void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)
 	*fixvoxpitches = *fixvoxphrases = 0;	//By default, don't make changes
 	for(j = 1; j < sp->tracks; j++)
 	{	//For each track
-		if(sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT)
+		if(!eof_track_is_vocal_track(sp, j))
 			continue;	//If this isn't a vocal track, skip it
 
 		//Pre-parse the lyrics to determine if any pitchless lyrics are present
