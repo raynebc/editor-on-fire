@@ -2133,8 +2133,8 @@ int eof_menu_song_add_silence(void)
 		return 1;
 	}
 
-	if(firstlaunch && (eof_write_rs_files || eof_write_rs2_files))
-	{	//If this is the first time this dialog is launched during this EOF session, and Rocksmith export is enabled
+	if(firstlaunch && (eof_write_rs_files || eof_write_rs2_files) && eof_get_track_size_normal(eof_song, eof_selected_track))
+	{	//If this is the first time this dialog is launched during this EOF session, and Rocksmith export is enabled, and the active track has at least one normal note
 		eof_leading_silence_dialog[10].flags = D_SELECTED;	//Automatically enable the "Add RS COUNT measure" option
 	}
 	firstlaunch = 0;

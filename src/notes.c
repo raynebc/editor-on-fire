@@ -3353,6 +3353,51 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		return 2;	//False
 	}
 
+	//A Rock Band 3 guitar pro guitar track is active
+	if(!ustricmp(macro, "IF_IS_ROCK_BAND_3_PRO_GUITAR_TRACK"))
+	{
+		if((eof_selected_track == EOF_TRACK_PRO_GUITAR) || (eof_selected_track == EOF_TRACK_PRO_GUITAR_22))
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//A Rock Band 3 bass pro guitar track is active
+	if(!ustricmp(macro, "IF_IS_ROCK_BAND_3_PRO_BASS_TRACK"))
+	{
+		if((eof_selected_track == EOF_TRACK_PRO_BASS) || (eof_selected_track == EOF_TRACK_PRO_BASS_22))
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the active track's lane count is a specific number
+	count_string = strcasestr_spec(macro, "IF_TRACK_LANE_COUNT_IS_");	//Get a pointer to the text that would be the difficulty number
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long lanecount;
+
+		if(eof_track_is_legacy_track(eof_song, eof_selected_track) || eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		{	//If a legacy or pro guitar track is active
+			if(eof_read_macro_number(count_string, &lanecount))
+			{	//If the lane count number was successfully parsed
+				if(eof_count_track_lanes(eof_song, eof_selected_track) == lanecount)
+				{	//If the number is the active track's lane count
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
 	//A track that is in BEATABLE mode is active
 	if(!ustricmp(macro, "IF_IS_BEATABLE_TRACK"))
 	{
@@ -3597,9 +3642,9 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 				dest_buffer[0] = '\0';
 				return 3;	//True
 			}
-
-			return 2;	//False
 		}
+
+		return 2;	//False
 	}
 
 	//If the active difficulty is Easy (Rock Band difficulty labeling)
@@ -3779,9 +3824,9 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 				dest_buffer[0] = '\0';
 				return 3;	//True
 			}
-
-			return 2;	//False
 		}
+
+		return 2;	//False
 	}
 
 	if(!ustricmp(macro, "IF_TRACK_DIFF_HAS_INVALID_DRUM_CHORDS"))
@@ -3802,9 +3847,9 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 					}
 				}
 			}
-
-			return 2;	//False
 		}
+
+		return 2;	//False
 	}
 
 	if(!ustricmp(macro, "IF_NONZERO_MIDI_DELAY"))
@@ -4001,7 +4046,6 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
-
 		return 2;	//False
 	}
 
@@ -4012,7 +4056,6 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
-
 		return 2;	//False
 	}
 
@@ -4024,7 +4067,6 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
-
 		return 2;	//False
 	}
 
