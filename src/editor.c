@@ -907,7 +907,6 @@ if(eof_key_code == KEY_PAUSE)
 
 	if(eof_song_loaded)
 	{
-
 	}
 }
 

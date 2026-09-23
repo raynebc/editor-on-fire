@@ -256,6 +256,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
 	{ d_agup_check_proc, 16,  319, 175, 16,  2,   23,  0,    0,      1,   0,   "Make lyric tails clickable",NULL, NULL },
 	{ d_agup_check_proc, 16,  335, 210, 16,  2,   23,  0,    0,      1,   0,   "CTRL+TAB skips empty tracks",NULL, NULL },
+	{ d_agup_check_proc, 248, 399, 168, 16,  2,   23,  0,    0,      1,   0,   "Don't check for updates",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1646,6 +1647,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[53].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;			//Use FoF difficulty naming
 	eof_preferences_dialog[54].flags = eof_lyric_tails_clickable ? D_SELECTED : 0;				//Make lyric tails clickable
 	eof_preferences_dialog[55].flags = eof_ctrl_tab_skip_empty_tracks ? D_SELECTED : 0;			//CTRL+TAB skips empty tracks
+	eof_preferences_dialog[56].flags = eof_dont_check_for_updates ? D_SELECTED : 0;			//Don't check for updates
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1769,6 +1771,7 @@ int eof_menu_file_preferences(void)
 			eof_use_fof_difficulty_naming = (eof_preferences_dialog[53].flags == D_SELECTED ? 1 : 0);
 			eof_lyric_tails_clickable = (eof_preferences_dialog[54].flags == D_SELECTED ? 1 : 0);
 			eof_ctrl_tab_skip_empty_tracks = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
+			eof_dont_check_for_updates = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1828,6 +1831,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[53].flags = 0;					//Use FoF difficulty naming
 			eof_preferences_dialog[54].flags = D_SELECTED;			//Make lyric tails clickable
 			eof_preferences_dialog[55].flags = 0;					//CTRL+TAB skips empty tracks
+			eof_preferences_dialog[56].flags = 0;					//Don't check for updates
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -2050,7 +2054,7 @@ int eof_menu_file_gp_preferences(void)
 	eof_pg_preferences_dialog[9].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;		//Don't auto-name double stops
 	eof_pg_preferences_dialog[10].flags = eof_technote_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust tech notes
 	eof_pg_preferences_dialog[11].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;		//Fingering checks include mutes
-	eof_pg_preferences_dialog[12].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;			//2D render RS piano roll
+	eof_pg_preferences_dialog[12].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;				//2D render RS piano roll
 	eof_pg_preferences_dialog[13].flags = eof_dont_restrict_tone_change_timing ? D_SELECTED : 0;	//Don't restrict tone change timing
 
 	eof_log("\tLaunching Guitar Pro Preferences dialog", 2);
@@ -2082,7 +2086,7 @@ int eof_menu_file_gp_preferences(void)
 			eof_pg_preferences_dialog[6].flags = 0;					//Treat inverted chords as slash
 			eof_pg_preferences_dialog[7].flags = 0;					//3D render RS style chords
 			eof_pg_preferences_dialog[8].flags = D_SELECTED;		//Offer to auto complete fingering
-			eof_pg_preferences_dialog[9].flags = 0;					//Don't auto-name double stops
+			eof_pg_preferences_dialog[9].flags = D_SELECTED;		//Don't auto-name double stops
 			eof_pg_preferences_dialog[10].flags = D_SELECTED;		//Auto-Adjust tech notes
 			eof_pg_preferences_dialog[11].flags = 0;				//Fingering checks include mutes
 			eof_pg_preferences_dialog[12].flags = 0;				//2D render RS piano roll

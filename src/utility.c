@@ -1,9 +1,18 @@
 #include <allegro.h>
+
+#ifdef ALLEGRO_WINDOWS
+//For the online update check, including Windows related headers should be done immediately after including Allegro's header
+#include <winalleg.h>
+#include <wininet.h>	//For DeleteUrlCacheEntry()
+#include <urlmon.h>	//For URLDownloadToFile()
+#endif
+
 #include <ctype.h>
 #include <sys/stat.h>
 #include "utility.h"
 #include "main.h"	//For logging
 #include "mix.h"
+#include "foflc/Lyric_storage.h"
 #include "foflc/RS_parse.h"	//For rs_lyric_substitute_char_extended()
 #include "menu/file.h"		//For eof_menu_file_link_ffmpeg()
 #include "menu/track.h"
@@ -1462,4 +1471,250 @@ int eof_parse_four_digit_year(char *input, char *output)
 	}
 
 	return 0;	//No match found
+}
+
+int eof_download_file(char *url, char *dest, unsigned long delay, unsigned long delaycount)
+{
+	#ifndef ALLEGRO_WINDOWS
+		return 0;	//Not supported on other platforms
+	#else
+
+	long res;
+	unsigned long ctr;
+
+	(void) delete_file(dest);	//Delete the file if it exists
+	if(exists(dest))
+		return 0;		//Failed to delete destination file
+
+	eof_log("eof_download_file() entered", 2);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAttempting to download file \"%s\" to \"%s\"", url, dest);
+	eof_log(eof_log_string, 2);
+
+	DeleteUrlCacheEntry(url);	//Delete the online version file from browser cache to load the live data
+	res = URLDownloadToFile(NULL, url, dest, 0, NULL);
+	if(res == 0)
+	{	//If the file reportedly began downloading
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDownload launched, waiting %lu ms", delay);
+		eof_log(eof_log_string, 2);
+		Idle(delay);	//Wait the specified number of milliseconds to check again
+		if(exists(dest))
+		{	//If the file now exists
+			eof_log("\tDownload succeeded", 2);
+			return 1;	//Success
+		}
+		for(ctr = 0; ctr < delaycount; ctr++)
+		{	//For the specified number of delay periods
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDownload not completed, attempting retry #%lu in %lu ms", ctr + 1, delay);
+			eof_log(eof_log_string, 2);
+			Idle(delay);	//Wait the specified number of milliseconds to check again
+			if(exists(dest))
+			{	//If the file now exists
+				eof_log("\tDownload succeeded", 2);
+				return 1;	//Success
+			}
+		}
+	}
+
+	eof_log("\tDownload not completed", 2);
+	return 0;	//File did not download
+	#endif
+}
+
+unsigned long eof_parse_build_version(char *str)
+{
+	unsigned long index1 = 0, index2 = 0;
+	char number[5] = {0};
+
+	if(!str)
+		return 0;	//Invalid parameter
+
+	//Parse the build information
+	if(isdigit(str[index2]))
+	{	//A number character is expected for the major version number
+		number[index1++] = str[index2++];
+	}
+	else
+		return 0;	//Failed to parse major version
+
+	if(str[index2] == '.')
+	{	//Parse major revision number
+		index2++;	//Seek past decimal point
+		if(isdigit(str[index2]))
+		{	//A number character is expected for the major revision number
+			number[index1++] = str[index2++];
+		}
+		else
+			return 0;	//Failed to parse major revision
+	}
+	else
+	{	//Insert 0 for major revision number
+		number[index1++] = '0';
+	}
+	if((str[index2] == 'R') && (str[index2 + 1] == 'C'))
+	{	//Parse release candidate number
+		index2 += 2;	 //Seek past "RC"
+
+		if(isdigit(str[index2]))
+		{	//A number character is expected
+			number[index1++] = str[index2++];
+		}
+		else
+			return 0;	//Failed to parse release candidate number
+
+		//Allow for a second digit for the release candidate number
+		if(isdigit(str[index2]))
+		{	//A number character is expected
+			number[index1++] = str[index2++];
+		}
+	}
+	else
+	{	//Insert two zeroes for release candidate number
+		number[index1++] = '0';
+		number[index1++] = '0';
+	}
+	number[index1] = '\0';	//Truncate the string
+
+	return atol(number);
+}
+
+unsigned long eof_parse_mmddyyyy(char *str)
+{
+	char day[3] = {0}, month[3] = {0}, year[5] = {0};
+	unsigned long index1 = 0, index2 = 0, ctr;
+
+	if(!str)
+		return 0;	//Invalid parameter
+
+	//Parse up to two digits for the month
+	if(isdigit(str[index2]))
+		month[index1++] = str[index2++];
+	else
+		return 0;	//No digit present to define the month
+	if(isdigit(str[index2]))
+		month[index1++] = str[index2++];
+	month[index1] = '\0';	//Truncate month string
+	index1 = 0;
+
+	//Parse dash
+	if(str[index2] != '-')
+		return 0;	//No dash present to separate month and day
+	index2++;	//Seek past dash
+
+	//Parse up to two digits for the day
+	if(isdigit(str[index2]))
+		day[index1++] = str[index2++];
+	else
+		return 0;	//No digit present to define the day
+	if(isdigit(str[index2]))
+		day[index1++] = str[index2++];
+	day[index1] = '\0';	//Truncate day string
+	index1 = 0;
+
+	//Parse dash
+	if(str[index2] != '-')
+		return 0;	//No dash present to separate day and year
+	index2++;	//Seek past dash
+
+	//Parse four digits for the year
+	for(ctr = 0; ctr < 4; ctr++)
+	{
+		if(isdigit(str[index2]))
+			year[index1++] = str[index2++];
+		else
+			return 0;	//Invalid character for year
+	}
+	year[4] = '\0';	//Truncate year string
+
+	return (atol(year) * 10000) + (atol(month) * 100) + atol(day);
+}
+
+int eof_check_update(void)
+{
+	#ifndef ALLEGRO_WINDOWS
+		return 0;	//Not supported on other platforms
+	#else
+
+	char *online_url = "https://ignition4.customsforge.com/eof/latest.txt";
+	char dest_file[1024] = {0};
+	char *buffer = NULL, *hotfix, *build;
+	char running_version_string[30];
+	unsigned long online_ver = 0, online_date = 0, running_ver = 0, running_date = 0;
+
+
+	eof_log("eof_check_update() entered", 1);
+
+	//Download the data about the latest online build
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;	//Return failure
+	}
+
+	(void) snprintf(dest_file, sizeof(dest_file) - 1, "%slatest.txt", eof_temp_path_s);
+	if(!eof_download_file(online_url, dest_file, 500, 3))
+	{	//If the details about the latest EOF build could not be downloaded from Ignition
+		eof_log("\tCouldn't download", 1);
+		return 0;	//Return failure
+	}
+
+	buffer = (char *)eof_buffer_file(dest_file, 1, 1);	//Buffer the file into memory, adding a NULL terminator and discarding any byte order mark
+	if(!buffer)
+	{
+		eof_log("\tCouldn't buffer data", 1);
+		return 0;
+	}
+	build = strcasestr_spec(buffer, "version=");	//Look for the main build number
+	hotfix = strcasestr_spec(buffer, "hotfix=");	//Look for the hotfix build date
+	if(!build || !hotfix)
+	{
+		eof_log("\tCouldn't parse data", 1);
+		free(buffer);
+		return 0;	//If the dates couldn't be parsed from the downloaded file, return failure
+	}
+
+	//Parse the online build information
+	online_ver = eof_parse_build_version(build);
+	if(!online_ver)
+	{
+		eof_log("\tCorrupted data", 1);
+		free(buffer);
+		return 0;	//Failed to convert the string to a number
+	}
+	online_date = eof_parse_mmddyyyy(hotfix);	//Parse the online hotfix date
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected online version:  %lu, hotfix date:  %lu", online_ver, online_date);
+	eof_log(eof_log_string, 1);
+	free(buffer);
+
+	//Parse the running build information
+	snprintf(running_version_string, sizeof(running_version_string) - 1, "%s", EOF_VERSION_STRING);
+	build = strcasestr_spec(running_version_string, "EOF v");	//In the internal version string, this prefixes the number
+	running_ver = eof_parse_build_version(build);
+	if(!running_ver)
+	{
+		eof_log("\tCorrupted data", 1);
+		return 0;	//Failed to convert the string to a number
+	}
+	hotfix = strcasestr_spec(running_version_string, "(");	//In the internal version string, any hotfix date would be after the first opening parenthesis
+	if(hotfix)
+	{	//If a hotfix date was defined
+		running_date = eof_parse_mmddyyyy(hotfix);	//Parse the running hotfix date
+	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected running version:  %lu, date:  %lu", running_ver, running_date);
+	eof_log(eof_log_string, 1);
+
+	//Compare the latest online build information against the running build
+	if((online_ver > running_ver) || ((online_ver == running_ver) && (online_date > running_date)))
+	{	//If the online version is determined to be newer
+		int retval;
+
+		eof_log("\tUpdate detected", 1);
+		retval = alert("There is a newer version of EOF available online.", NULL, "Would you like to go to its download page?", "&Yes", "&No", 'y', 'n');
+		if(retval == 1)
+		{	//User opted to browse to the download page
+			(void) eof_system("start https://ignition4.customsforge.com/eof");
+		}
+	}
+
+	return 1;	//Success
+	#endif
 }

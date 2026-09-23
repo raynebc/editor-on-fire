@@ -149,4 +149,19 @@ int eof_parse_four_digit_year(char *input, char *output);
 	//output is required to be a buffer at least 5 bytes long
 	//Returns nonzero if a matching character pattern is found, otherwise 0
 
+int eof_download_file(char *url, char *dest, unsigned long delay, unsigned long delaycount);
+	//On Windows platform only, downloads the specified URL to the specified destination file
+	//Before the download occurs, the target filename is deleted to ensure it can be determined if the destination file is written
+	//After the download starts, delays by the specified number of milliseconds of delay before checking if the file exists on disk, and if not, will re-run the delay and re-check the specified count of times before determining success or failure
+	//Returns nonzero on success
+unsigned long eof_parse_build_version(char *str);
+	//Parses an EOF build string expected to be formatted as #.# to define the version and major revision numbers, with an optional string "RC##" following to define the release candidate
+	//Returns this information as a four number formatted as: (major revision * 1000) + (minor revision * 100) + release candidate number
+unsigned long eof_parse_mmddyyyy(char *str);
+	//Parses the string expecting a date in mm-dd-yyyy format
+	//Returns this information as a number in yyyymmdd format: (year * ten thousand) + (month * one hundred) + day
+int eof_check_update(void);
+	//On Windows platform only, downloads information about the latest published main and hotfix build of EOF from the Ignition website and checks whether it's newer than the running build
+	//If it is, prompts the user whether to launch the Ignition page to see the latest version
+
 #endif

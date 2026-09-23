@@ -277,6 +277,7 @@ void eof_load_config(char * fn)
 	eof_note_tails_clickable = get_config_int("preferences", "eof_note_tails_clickable", 0);
 	eof_lyric_tails_clickable = get_config_int("preferences", "eof_lyric_tails_clickable", 1);
 	eof_ctrl_tab_skip_empty_tracks = get_config_int("preferences", "eof_ctrl_tab_skip_empty_tracks", 0);
+	eof_dont_check_for_updates = get_config_int("preferences", "eof_dont_check_for_updates", 0);
 	eof_render_grid_lines = get_config_int("preferences", "eof_render_grid_lines", 0);
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
 	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);
@@ -304,7 +305,7 @@ void eof_load_config(char * fn)
 	eof_gp_import_track_specific_events = get_config_int("preferences", "eof_gp_import_track_specific_events", 0);
 	eof_gp_import_keep_ghost_guitar_status = get_config_int("preferences", "eof_gp_import_keep_ghost_guitar_status", 0);
 	eof_db_import_suppress_5nc_conversion = get_config_int("preferences", "eof_db_import_suppress_5nc_conversion", 0);
-	eof_dont_auto_name_double_stops = get_config_int("preferences", "eof_dont_auto_name_double_stops", 0);
+	eof_dont_auto_name_double_stops = get_config_int("preferences", "eof_dont_auto_name_double_stops_2", 1);
 	eof_section_auto_adjust = get_config_int("preferences", "eof_section_auto_adjust", 1);
 	eof_technote_auto_adjust = get_config_int("preferences", "eof_technote_auto_adjust", 1);
 	eof_top_of_2d_pane_cycle_count_2 = get_config_int("preferences", "eof_top_of_2d_pane_cycle_count_2", 0);
@@ -841,6 +842,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_note_tails_clickable", eof_note_tails_clickable);
 	set_config_int("preferences", "eof_lyric_tails_clickable", eof_lyric_tails_clickable);
 	set_config_int("preferences", "eof_ctrl_tab_skip_empty_tracks", eof_ctrl_tab_skip_empty_tracks);
+	set_config_int("preferences", "eof_dont_check_for_updates", eof_dont_check_for_updates);
 	set_config_int("preferences", "eof_render_grid_lines", eof_render_grid_lines);
 	set_config_int("preferences", "eof_auto_complete_fingering", eof_auto_complete_fingering);
 	set_config_int("preferences", "eof_rbn_export_slider_hopo", eof_rbn_export_slider_hopo);
@@ -857,7 +859,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_gp_import_track_specific_events", eof_gp_import_track_specific_events);
 	set_config_int("preferences", "eof_gp_import_keep_ghost_guitar_status", eof_gp_import_keep_ghost_guitar_status);
 	set_config_int("preferences", "eof_db_import_suppress_5nc_conversion", eof_db_import_suppress_5nc_conversion);
-	set_config_int("preferences", "eof_dont_auto_name_double_stops", eof_dont_auto_name_double_stops);
+	set_config_int("preferences", "eof_dont_auto_name_double_stops_2", eof_dont_auto_name_double_stops);	//Config variable eof_dont_auto_name_double_stops was deprecated to ensure that the new default value of on by default would apply to existing configuration files
 	set_config_int("preferences", "eof_section_auto_adjust", eof_section_auto_adjust);
 	set_config_int("preferences", "eof_technote_auto_adjust", eof_technote_auto_adjust);
 	set_config_int("preferences", "eof_top_of_2d_pane_cycle_count_2", eof_top_of_2d_pane_cycle_count_2);

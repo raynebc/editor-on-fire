@@ -1985,7 +1985,7 @@ DIALOG eof_leading_silence_dialog[] =
 	{ eof_leading_silence_edit_proc, 16,  200, 74, 20,  2,   23,  0,    0,            10,  0,   eof_etext,       "1234567890", NULL },
 	{ d_agup_text_proc,       100,  200, 74, 20,  2,   23,  0,    0,           10,  0,   eof_etext2,       NULL, NULL },
 	{ d_agup_check_proc,      16,  226, 180, 16,  2,   23,  0,    D_SELECTED, 1,   0,   "Adjust Notes/Beats",    NULL, NULL },
-	{ d_agup_check_proc,      16,  246, 174, 16,  2,   23,  0,    D_SELECTED, 1,   0,   "Add RS COUNT measure",    NULL, NULL },
+	{ d_agup_check_proc,      16,  246, 174, 16,  2,   23,  0,    0, 1,   0,   "Add RS COUNT measure",    NULL, NULL },
 	{ d_agup_radio_proc,      16,  266, 160, 15,  2,   23,  0,    0,          1,   0,   "Stream copy (oggCat)",  NULL, NULL },
 	{ d_agup_radio_proc,      16,  286, 90,  15,  2,   23,  0,    0,          1,   0,   "Re-encode",             NULL, NULL },
 	{ d_agup_button_proc,     16,  312, 68,  28,  2,   23,  '\r', D_EXIT,     0,   0,   "OK",                    NULL, NULL },
@@ -2122,7 +2122,6 @@ int eof_menu_song_add_silence(void)
 	char fn[1024] = {0};
 	char mp3fn[1024] = {0};
 	static int creationmethod = 12;	//Stores the user's last selected leading silence creation method (default to re-encode, which is menu item 10 in eof_leading_silence_dialog[])
-	static int firstlaunch = 1;
 	int retval;
 	unsigned long old_eof_music_length = eof_music_length;	//Keep track of the current chart audio's length to compare with after silence was added
 
@@ -2132,12 +2131,6 @@ int eof_menu_song_add_silence(void)
 	{	//Do not allow this function to run when no audio is loaded or if there aren't at least two beats in the project
 		return 1;
 	}
-
-	if(firstlaunch && (eof_write_rs_files || eof_write_rs2_files) && eof_get_track_size_normal(eof_song, eof_selected_track))
-	{	//If this is the first time this dialog is launched during this EOF session, and Rocksmith export is enabled, and the active track has at least one normal note
-		eof_leading_silence_dialog[10].flags = D_SELECTED;	//Automatically enable the "Add RS COUNT measure" option
-	}
-	firstlaunch = 0;
 
 	eof_leading_silence_dialog[11].flags = 0;
 	eof_leading_silence_dialog[12].flags = 0;
