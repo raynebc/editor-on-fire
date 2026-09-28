@@ -7295,6 +7295,14 @@ int eof_menu_file_export_guitar_pro(void)
 			return 1;	//If RocksmithToTab is still not linked, return from this function
 	}
 
+	if((eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_BASS) && !eof_get_pro_guitar_track_arrangement_type(eof_song, EOF_TRACK_PRO_BASS)) || (eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_BASS_22) && !eof_get_pro_guitar_track_arrangement_type(eof_song, EOF_TRACK_PRO_BASS_22)))
+	{	//If either pro bass track is populated and has an undefined arrangement type
+		if(alert("Warning:  One of the bass tracks to be exported has no defined arrangement type.", "This will cause RocksmithToTab to export it as a guitar arrangement.", "It's recommended to manually define the arrangement type as bass first.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to continue
+			return 1;
+		}
+	}
+
 	//Create temporary XML files
 	(void) eof_validate_temp_folder();	//Attempt to set the current working directory if it isn't EOF's executable/resource folder
 	original_eof_abridged_rs2_export = eof_abridged_rs2_export;	//Back up the original setting of this user preference

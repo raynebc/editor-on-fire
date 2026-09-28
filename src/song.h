@@ -1372,4 +1372,7 @@ unsigned long eof_get_pos_num_notes_after_timestamp(EOF_SONG *sp, unsigned long 
 	//This is to find the target position of a "moveR" phrase, which repositions itself and any RS section/phrase at the same timestamp a specified number of notes after the phrase's position
 	//Returns 0 on error or if there is no such position that can be calculated
 
+unsigned long eof_get_pro_guitar_track_arrangement_type(EOF_SONG *sp, unsigned long track);
+	//Returns the specified pro guitar track's defined arrangement type, or ULONG_MAX upon error
+
 #endif

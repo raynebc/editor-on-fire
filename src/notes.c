@@ -4749,6 +4749,11 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	{
 		if(tp)
 		{	//If the active track is a pro guitar track
+			if(!tp->tonechanges)
+			{	//If there are no tone changes
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
 			eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
 			if(eof_track_rs_tone_names_list_strings_num > 1)
 			{	//If multiple tones are used

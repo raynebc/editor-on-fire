@@ -13310,3 +13310,17 @@ unsigned long eof_get_pos_num_notes_after_timestamp(EOF_SONG *sp, unsigned long 
 
 	return foundpos;	//Return the position that was found, if any
 }
+
+unsigned long eof_get_pro_guitar_track_arrangement_type(EOF_SONG *sp, unsigned long track)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return ULONG_MAX;
+	if(!eof_track_is_pro_guitar_track(sp, track))
+		return ULONG_MAX;
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
+
+	return tp->arrangement;
+}

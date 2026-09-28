@@ -2345,7 +2345,7 @@ DIALOG eof_audio_cues_dialog[] =
 	{ d_agup_slider_proc,	176,  88,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_chart_volume_string },
 	{ d_agup_text_proc,		275,  88,  30,  16,   2,  23,    0,      0, 100,   0, eof_chart_volume_string,      NULL, NULL },
 	{ d_agup_text_proc,		16,  108,  64,   8,   2,  23,    0,      0,   0,   0, "Chart pan",    NULL, NULL },
-	{ d_agup_slider_proc,	176, 108,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_pan, eof_chart_pan_string },
+	{ eof_audio_cues_slider_proc,	176, 108,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_pan, eof_chart_pan_string },
 	{ d_agup_text_proc,		275, 108,  30,  16,   2,  23,    0,      0, 100,   0, eof_chart_pan_string, NULL, NULL },
 	{ d_agup_text_proc,		16,	 128,  64,   8,   2,  23,    0,      0,   0,   0, "Clap volume",                NULL, NULL },
 	{ d_agup_slider_proc,	176, 128,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_clap_volume_string },
@@ -2363,7 +2363,7 @@ DIALOG eof_audio_cues_dialog[] =
 	{ d_agup_slider_proc,	176, 208,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_midi_tone_volume_string },
 	{ d_agup_text_proc,		275, 208,  30,  16,   2,  23,    0,      0, 100,   0, eof_midi_tone_volume_string, NULL, NULL },
 	{ d_agup_text_proc,		16,  228,  64,   8,   2,  23,    0,      0,   0,   0, "MIDI Tone pan",    NULL, NULL },
-	{ d_agup_slider_proc,	176, 228,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_pan, eof_midi_tone_pan_string },
+	{ eof_audio_cues_slider_proc,	176, 228,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_pan, eof_midi_tone_pan_string },
 	{ d_agup_text_proc,		275, 228,  30,  16,   2,  23,    0,      0, 100,   0, eof_midi_tone_pan_string, NULL, NULL },
 	{ d_agup_text_proc,		16,  248,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Percussion sound:",    NULL, NULL },
 	{ d_agup_radio_proc,	16,  268,  68,  15,   2,  23,    0,      0,   0,   0, "Cowbell",                    NULL, NULL },
@@ -2410,6 +2410,32 @@ int eof_set_cue_volume(void *dp3, int d2)
 	(void) object_message(&eof_audio_cues_dialog[18], MSG_DRAW, 0);
 	(void) object_message(&eof_audio_cues_dialog[21], MSG_DRAW, 0);
 	return 0;
+}
+
+int eof_audio_cues_slider_proc(int msg, DIALOG *d, int c)
+{
+	int recenter = 0;
+
+	if((msg == MSG_CLICK) && KEY_EITHER_ALT)
+	{	//If ALT is held while clicking on the slider
+		recenter = 1;
+	}
+	if((msg == MSG_CHAR) && (tolower(c & 0xFF) == 'c'))
+	{	//If a key was pressed, and the ASCII (lower) half of the input is the letter C in either letter case
+		recenter = 1;
+	}
+
+	if(recenter)
+	{	//If input to re-center the pan slider was processed
+		d->d2 = 50;	//Set the slider to the center position
+		(void) snprintf((char *)d->dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "C    ");	//Rewrite the specified volume slider string
+		(void) object_message(d, MSG_DRAW, 0);						//Redraw the slider
+		(void) object_message(&eof_audio_cues_dialog[6], MSG_DRAW, 0);	//Redraw all pan slider strings
+		(void) object_message(&eof_audio_cues_dialog[24], MSG_DRAW, 0);
+		return D_O_K;
+	}
+
+	return d_agup_slider_proc(msg, d, c);
 }
 
 int eof_set_cue_pan(void *dp3, int d2)

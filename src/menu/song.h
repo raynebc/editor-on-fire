@@ -281,4 +281,7 @@ int eof_menu_song_add_floating_text_event(void);
 int eof_menu_song_add_floating_text_event_at_mouse(void);
 	//Calls eof_menu_song_add_floating_text_event_at_timestamp() specifying the pen note (mouse) position as the timestamp
 
+int eof_audio_cues_slider_proc(int msg, DIALOG *d, int c);
+	//Behaves as the normal d_agup_slider_proc function, except if ASCII input for C is detected, it re-centers the target slider object's value and redraws the pan value strings in eof_audio_cues_dialog()
+
 #endif
