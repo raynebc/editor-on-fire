@@ -4414,12 +4414,12 @@ int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp
 	return 1;
 }
 
-int eof_get_effective_ks(EOF_SONG *sp, char *key, unsigned long pos)
+int eof_get_effective_ks(EOF_SONG *sp, char *ks, unsigned long pos)
 {
 	char current_key = 0, key_defined = 0;
 	unsigned long beat;
 
-	if((sp == NULL) || !key)
+	if((sp == NULL) || !ks)
 		return 0;	//Return error
 
 	for(beat = 0; beat < sp->beats; beat++)
@@ -4436,7 +4436,7 @@ int eof_get_effective_ks(EOF_SONG *sp, char *key, unsigned long pos)
 
 	if(key_defined)
 	{	//If a key signature was in effect at the target position
-		*key = current_key;	//Return it to the calling function by reference
+		*ks = current_key;	//Return it to the calling function by reference
 		return 1;	//Return key signature found
 	}
 

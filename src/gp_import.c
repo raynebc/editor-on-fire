@@ -4497,7 +4497,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					measurelength = beatlength / (double)den;	//Calculate this length in terms of measures (beat length divided by beat unit)
 					if((unsigned long)(measurelength * 100.0 + 0.5) < 25)
 					{	//If the note (rounded up to allow for floating point math error) is shorter than a quarter note
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu pos = %lums, len = %lums, measure length = %f -> 1ms long", ctr2, vars.gp->track[ctr]->note[ctr2]->pos, vars.gp->track[ctr]->note[ctr2]->length, measurelength);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu pos = %lums, len = %ldms, measure length = %f -> 1ms long", ctr2, vars.gp->track[ctr]->note[ctr2]->pos, vars.gp->track[ctr]->note[ctr2]->length, measurelength);
 						eof_log(eof_log_string, 2);
 						vars.gp->track[ctr]->note[ctr2]->length = 1;
 					}
@@ -4797,7 +4797,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						eof_log("\tResnapping note tails", 1);
 						firstlogged = 1;
 					}
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu, note #%lu (length %lu -> %lu)", ctr, ctr2, np->length, snappos - np->pos);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu, note #%lu (length %ld -> %lu)", ctr, ctr2, np->length, snappos - np->pos);
 					eof_log(eof_log_string, 2);
 #endif
 					if((snappos + 1 == np->pos + np->length) || (np->pos + np->length + 1 == snappos))

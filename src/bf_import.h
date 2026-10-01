@@ -35,7 +35,7 @@ void pack_ReadDWORDBE(PACKFILE *inf, void *data);
 void pack_ReadQWORDBE(PACKFILE *inf, void *data);
 	//Read a big endian ordered set of 8 bytes from the specified file.  If data isn't NULL, the value is stored into it.
 
-char *eof_lookup_bf_string_key(struct bf_string *ptr, unsigned long arraysize, unsigned long long key);
+char *eof_lookup_bf_string_key(struct bf_string *ptr, unsigned long arraysize, unsigned long long keyvalue);
 	//Looks for the specified key in the specified bf_string array, returning the pointer to the first matching string, or NULL if there is no match
 
 int eof_dword_to_binary_string(unsigned long dword, char *buffer);

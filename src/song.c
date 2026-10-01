@@ -11477,7 +11477,7 @@ char eof_pro_guitar_tech_note_overlaps_a_note(EOF_PRO_GUITAR_TRACK *tp, unsigned
 			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if applicable
 			return 1;	//Return overlap found at start of note
 		}
-		if((techpos >= np->pos) && (techpos <= np->pos + notelen))
+		if(techpos <= np->pos + notelen)
 		{	//If the tech note overlaps this regular note
 			if(note_num)
 			{	//If the calling function passed a non NULL pointer
@@ -12862,14 +12862,16 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 	}
 
 	if(arpeggio_base)
+	{
 		arpeggio_base_fret = arpeggio_base->frets[stringnum] & 0x7F;	//Store this with the mute bit masked out
-	if(arpeggio_base && (arpeggio_base_fret == 0))
-	{	//If this gem is within an arpeggio/handshape that does not use the specified string
-		return -3;	//The specified gem violates the arpeggio/handshape
-	}
-	if(arpeggio_base && (arpeggio_base_fret != fret))
-	{	//If this gem is within an arpeggio/handshape but does not use the same fret as the base chord
-		return -4;	//The specified fret violates the arpeggio/handshape
+		if(arpeggio_base_fret == 0)
+		{	//If this gem is within an arpeggio/handshape that does not use the specified string
+			return -3;	//The specified gem violates the arpeggio/handshape
+		}
+		if(arpeggio_base_fret != fret)
+		{	//If this gem is within an arpeggio/handshape but does not use the same fret as the base chord
+			return -4;	//The specified fret violates the arpeggio/handshape
+		}
 	}
 	if(*result)
 	{	//If the string has a fingering defined

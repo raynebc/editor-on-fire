@@ -134,7 +134,7 @@ void eof_music_play(char resumelastspeed)
 		}while(held);
 
 		counter++;
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting chart playback #%lu at %ldms", counter, EOF_SEEK_POS);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting chart playback #%lu at %lums", counter, EOF_SEEK_POS);
 		eof_log(eof_log_string, 1);
 
 		eof_log("\t\tCalling OGG playback function", 3);
@@ -221,7 +221,7 @@ void eof_catalog_play(void)
 			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, pan, 1000 + eof_audio_fine_tune, 0) == ALOGG_OK)
 			{
 				counter++;
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting catalog playback #%lu at %ldms", counter, EOF_SEEK_POS);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting catalog playback #%lu at %lums", counter, EOF_SEEK_POS);
 				eof_log(eof_log_string, 1);
 
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);

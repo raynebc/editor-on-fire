@@ -1247,7 +1247,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "SELECTED_NOTE_END_POS"))
 	{
 		if(eof_selection.current < tracksize)
-			snprintf(dest_buffer, dest_buffer_size, "%ld", eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current) + eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
+			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current) + eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
@@ -1357,7 +1357,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				int scale = 0, chord = 0, isslash = 0, bassnote = 0;
 				char **effective_note_names = eof_note_names;	//By default, use whichever sharp/flat preference the user has in effect
 				char **effective_slash_note_names = eof_slash_note_names;
-				char key;	//Stores the key signature in effect at the note's position
+				char ks;	//Stores the key signature in effect at the note's position
 
 				matchcount = eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current);
 				if(matchcount)
@@ -1369,14 +1369,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					{	//If there's more than one match
 						(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
 					}
-					if(eof_get_effective_ks(eof_song, &key, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current)))
+					if(eof_get_effective_ks(eof_song, &ks, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current)))
 					{	//If there is a key signature in effect at the selected note's position, use the sharp/flat accidentals corresponding to that scale
-						if(key < 0)
+						if(ks < 0)
 						{
 							effective_note_names = eof_note_names_flat;	//A key using flat note names is in use
 							effective_slash_note_names = eof_slash_note_names_flat;
 						}
-						else if(key > 0)
+						else if(ks > 0)
 						{
 							effective_note_names = eof_note_names_sharp;	//A key using sharp note names is in use
 							effective_slash_note_names = eof_slash_note_names_sharp;
