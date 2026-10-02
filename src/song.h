@@ -972,6 +972,7 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 	//If function is 1, the applicable strings' fret values are incremented
 	//If function is 2, the applicable strings' fret values are decremented
 	//If fingering view is in effect, the selected notes' finger values on used strings (that match the eof_pro_guitar_fret_bitmask bitmask) are set instead
+	//For notes that directly (not through tech notes) have a defined pitched or unpitched slide end position, that end position is also transposed if possible, or otherwise the note is highlighted if the slide ending cannot be transposed
 int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newnumstrings);
 	//If there are any gems on a string higher than the specified number of strings for the specified track, the highest used string number is returned
 	//0 is returned if there are no conflicts

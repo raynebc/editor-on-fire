@@ -2123,11 +2123,12 @@ int eof_menu_note_transpose_down(void)
 int eof_menu_note_pitched_transpose(int dir, char option)
 {
 	unsigned long max;	//This represents the combination of all usable lanes, based on the number of strings in the track
-	unsigned long notectr, stringctr, targetstring, bitmask;
+	unsigned long notectr, stringctr, targetstring, bitmask, flags;
 	EOF_PRO_GUITAR_TRACK *tp;
 	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-	unsigned char pitchmask, pitches[6] = {0}, stringpitch, note, ghost;
-	char warned = 0;
+	unsigned char pitchmask, pitches[6] = {0}, stringpitch, note, ghost, before;
+	int fret_diff = 0;
+	char warned = 0, invalid;
 
 	if(dir > 1)
 		dir = 1;	//Bounds check the dir parameter
@@ -2174,23 +2175,82 @@ int eof_menu_note_pitched_transpose(int dir, char option)
 				if(targetstring >= tp->numstrings)
 					continue;	//If transposing up and this is the highest string, skip it
 
+				//Transpose the note
 				if(pitchmask & bitmask)
 				{	//If this string has a pitch to transpose
-					mutestatus = tp->pgnote[notectr]->frets[stringctr] & 0x80;	//Retain the string mute status if present
+					mutestatus = tp->note[notectr]->frets[stringctr] & 0x80;	//Retain the string mute status if present
+					before = tp->note[notectr]->frets[stringctr] & 0x7F;		//Remember the original fret used for this note (masking out the mute status)
 					stringpitch =  tp->tuning[targetstring] + eof_lookup_default_string_tuning_absolute(tp, eof_selected_track, targetstring) + tp->capo;	//Determine the pitch of the string the note pitch will transpose to
 					if(stringpitch > pitches[stringctr])
 						return 0;	//Logic error
 					newfrets[targetstring] = pitches[stringctr] - stringpitch;
+					fret_diff = newfrets[targetstring] - before;	//Track how many frets the note changed
 					newfrets[targetstring] |= mutestatus;	//Reapply the string mute status if applicable
 					if(newfrets[targetstring] > tp->numfrets)
 						return 0;	//Logic error
 				}
 				else
 				{	//There is no pitch (ie. this string isn't used, or is a ghosted or string muted gem)
-					newfrets[targetstring] = tp->pgnote[notectr]->frets[stringctr];	//Retain the string's existing fret value and transpose it up/down one string
+					newfrets[targetstring] = tp->note[notectr]->frets[stringctr];	//Retain the string's existing fret value and transpose it up/down one string
 				}
 			}
-			memcpy(tp->pgnote[notectr]->frets, newfrets, sizeof(newfrets));
+			memcpy(tp->note[notectr]->frets, newfrets, sizeof(newfrets));
+
+			//Transpose the note's slide end position if applicable
+			invalid = 0;	//Track whether a slide cannot pitched transpose
+			flags = eof_get_note_flags(eof_song, eof_selected_track, notectr);
+			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && tp->note[notectr]->slideend)
+			{	//If this note has a defined pitched slide
+				if(fret_diff < 0)
+				{
+					if(abs(fret_diff) >= tp->note[notectr]->slideend)
+					{	//If the change would bring the slide end position at or below fret 0
+						invalid = 1;
+					}
+				}
+				else if(tp->note[notectr]->slideend + fret_diff > tp->numfrets)
+				{	//If the change woudl bring the slide end position above the track's fret limit
+					invalid = 1;
+				}
+				if(invalid)
+				{
+					tp->note[notectr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
+				}
+				else
+				{
+					tp->note[notectr]->slideend += fret_diff;	//Adjust the slide's ending by the same number of frets that the note was changed
+				}
+			}
+			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notectr]->unpitchend)
+			{	//If this note has a defined unpitched slide
+				if(fret_diff < 0)
+				{
+					if(abs(fret_diff) >= tp->note[notectr]->unpitchend)
+					{	//If the change would bring the slide end position at or below fret 0
+						invalid = 1;
+					}
+				}
+				else if(tp->note[notectr]->unpitchend + fret_diff > tp->numfrets)
+				{	//If the change woudl bring the slide end position above the track's fret limit
+					invalid = 1;
+				}
+				if(invalid)
+				{
+					tp->note[notectr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
+				}
+				else
+				{
+					tp->note[notectr]->unpitchend += fret_diff;	//Adjust the slide's ending by the same number of frets that the note was changed
+				}
+			}
+			if(invalid && !eof_suppress_pitched_transpose_warning && !warned)
+			{
+				if(alert("At least one selected note's slide could not pitch transpose", "", "They will be highlighted.", "OK", "Don't warn me", 0, 0) == 2)
+				{	//If user opts opts to suppress this warning
+					eof_suppress_pitched_transpose_warning = 1;
+				}
+				warned = 1;
+			}
 
 			//Transpose the note bitmask
 			if(dir < 0)

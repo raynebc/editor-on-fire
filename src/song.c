@@ -8695,10 +8695,12 @@ void eof_set_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track, unsigned lon
 
 void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value)
 {
-	unsigned long ctr, ctr2, bitmask, tracknum;
+	unsigned long ctr, ctr2, bitmask, tracknum, flags;
 	char undo_made = 0;
 	unsigned char oldvalue = 0, newvalue = 0;
-	int note_selection_updated;
+	int note_selection_updated, fret_diff = 0;;
+	char invalid;
+	EOF_PRO_GUITAR_TRACK *tp;
 
  	eof_log("eof_set_pro_guitar_fret_or_finger_number() entered", 1);
 
@@ -8711,31 +8713,32 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+	tp = eof_song->pro_guitar_track[tracknum];	//Simplify
+	for(ctr = 0; ctr <tp->notes; ctr++)
 	{	//For each note in the active pro guitar track
-		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (eof_song->pro_guitar_track[tracknum]->note[ctr]->type != eof_note_type))
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (tp->note[ctr]->type != eof_note_type))
 			continue;	//If the note is not selected, skip it
 
 		for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
 		{	//For each of the 6 usable strings
-			if(!(eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask) || !(eof_pro_guitar_fret_bitmask & bitmask))
+			if(!(tp->note[ctr]->note & bitmask) || !(eof_pro_guitar_fret_bitmask & bitmask))
 				continue;	//If this string is not in use or it is not enabled for fret shortcut manipulation, skip it
 
 			if(eof_fingering_view)
 			{	//If fingering view is in effect, alter the finger value
 				if(value == 0)
 					value = 5;	//Convert from Rocksmith's numbering (0 = thumb) to EOF's numbering (5 = thumb)
-				oldvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2];	//Simplify
+				oldvalue =tp->note[ctr]->finger[ctr2];	//Simplify
 				if(!undo_made && (value != oldvalue))
 				{	//Make an undo state before making the first change
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				eof_song->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2] = value;	//Update the string's finger value
+				tp->note[ctr]->finger[ctr2] = value;	//Update the string's finger value
 			}
 			else
 			{	//Otherwise edit the fret value
-				oldvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
+				oldvalue = tp->note[ctr]->frets[ctr2];
 				newvalue = oldvalue;
 
 				if(function && (oldvalue == 0xFF))	//Don't allow a muted gem with no defined fret value to be incremented/decremented
@@ -8750,25 +8753,75 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 					case 1:	//Increment fret value
 						if(oldvalue != 0xFF)	//Don't increment a muted note
 							newvalue++;
+						fret_diff = 1;
 					break;
 
 					case 2:	//Decrement fret value
 						if(oldvalue > 0)	//Don't decrement an open note
 							newvalue--;
+						fret_diff = -1;
 					break;
 
 					default:
 					break;
 				}
-				if(((newvalue & 0x7F) <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newvalue == 0xFF))
+				if(((newvalue & 0x7F) <= tp->numfrets) || (newvalue == 0xFF))
 				{	//Only set the fret value (when masking out the mute bit) if it is valid
 					if(!undo_made && (newvalue != oldvalue))
 					{	//Make an undo state before making the first change
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 						undo_made = 1;
 					}
-					eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = newvalue;		//Update the string's fret value
-					memset(eof_song->pro_guitar_track[tracknum]->note[ctr]->finger, 0, 8);		//Initialize all fingers to undefined
+					tp->note[ctr]->frets[ctr2] = newvalue;		//Update the string's fret value
+					memset(tp->note[ctr]->finger, 0, 8);		//Initialize all fingers to undefined
+
+					//Transpose the note's slide end position if applicable
+					invalid = 0;	//Track whether a slide cannot transpose
+					flags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
+					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && tp->note[ctr]->slideend)
+					{	//If this note has a defined pitched slide
+						if(fret_diff < 0)
+						{
+							if(abs(fret_diff) >= tp->note[ctr]->slideend)
+							{	//If the change would bring the slide end position at or below fret 0
+								invalid = 1;
+							}
+						}
+						else if(tp->note[ctr]->slideend + fret_diff > tp->numfrets)
+						{	//If the change woudl bring the slide end position above the track's fret limit
+							invalid = 1;
+						}
+						if(invalid)
+						{
+							tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
+						}
+						else
+						{
+							tp->note[ctr]->slideend += fret_diff;	//Adjust the slide's ending by the same number of frets that the note was changed
+						}
+					}
+					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[ctr]->unpitchend)
+					{	//If this note has a defined unpitched slide
+						if(fret_diff < 0)
+						{
+							if(abs(fret_diff) >= tp->note[ctr]->unpitchend)
+							{	//If the change would bring the slide end position at or below fret 0
+								invalid = 1;
+							}
+						}
+						else if(tp->note[ctr]->unpitchend + fret_diff > tp->numfrets)
+						{	//If the change woudl bring the slide end position above the track's fret limit
+							invalid = 1;
+						}
+						if(invalid)
+						{
+							tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
+						}
+						else
+						{
+							tp->note[ctr]->unpitchend += fret_diff;	//Adjust the slide's ending by the same number of frets that the note was changed
+						}
+					}
 				}
 			}
 		}

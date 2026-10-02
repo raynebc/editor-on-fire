@@ -79,6 +79,7 @@ int eof_menu_note_pitched_transpose(int dir, char option);
 	//dir < 0 is transpose up, dir > 0 is transpose down
 	//If option is zero, this function only alters selected notes if ALL of them are capable of being transposed
 	//If option is nonzero, this function alters ANY selected notes that are capable of being transposed, and highlights those that cannot be transposed
+	//For notes that directly (not through tech notes) have a defined pitched or unpitched slide end position, that end position is also transposed if possible, or otherwise the note is highlighted if the slide ending cannot be transposed
 int eof_menu_note_pitched_transpose_up(void);
 	//Uses eof_menu_note_pitched_transpose() to transpose selected pro guitar normal notes up, with option 1
 int eof_menu_note_pitched_transpose_down(void);
