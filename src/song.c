@@ -8693,13 +8693,75 @@ void eof_set_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track, unsigned lon
 	}
 }
 
+int eof_adjust_note_slide(EOF_PRO_GUITAR_TRACK *tp, unsigned long notenum, int fret_diff)
+{
+	unsigned long flags;
+	int retval = 1, invalid = 0;
+	EOF_PRO_GUITAR_NOTE *np;
+
+	if(!tp || (notenum >= tp->notes) || !fret_diff)
+		return 0;	//Invalid parameters, no adjustments will be made
+
+	np = tp->note[notenum];	//Simplify
+	flags = np->flags;
+	if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && np->slideend)
+	{	//If this note has a defined pitched slide
+		retval = 1;	//A note will be modified
+		if(fret_diff < 0)
+		{
+			if(abs(fret_diff) >= np->slideend)
+			{	//If the change would bring the slide end position at or below fret 0
+				invalid = 1;
+			}
+		}
+		else if(np->slideend + fret_diff > tp->numfrets)
+		{	//If the change would bring the slide end position above the track's fret limit
+			invalid = 1;
+		}
+		if(invalid)
+		{
+			np->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
+		}
+		else
+		{
+			np->slideend += fret_diff;	//Adjust the slide's ending by the same number of frets that the note was changed
+		}
+	}
+	if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && np->unpitchend)
+	{	//If this note has a defined unpitched slide
+		retval = 1;	//A note will be modified
+		if(fret_diff < 0)
+		{
+			if(abs(fret_diff) >= np->unpitchend)
+			{	//If the change would bring the slide end position at or below fret 0
+				invalid = 1;
+			}
+		}
+		else if(np->unpitchend + fret_diff > tp->numfrets)
+		{	//If the change would bring the slide end position above the track's fret limit
+			invalid = 1;
+		}
+		if(invalid)
+		{
+			np->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
+		}
+		else
+		{
+			np->unpitchend += fret_diff;	//Adjust the slide's ending by the same number of frets that the note was changed
+		}
+	}
+	if(invalid)
+		retval = -1;	//If either slide type failed to transpose, it will be considered a failure
+
+	return retval;
+}
+
 void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value)
 {
-	unsigned long ctr, ctr2, bitmask, tracknum, flags;
+	unsigned long ctr, ctr2, bitmask, tracknum;
 	char undo_made = 0;
 	unsigned char oldvalue = 0, newvalue = 0;
 	int note_selection_updated, fret_diff = 0;;
-	char invalid;
 	EOF_PRO_GUITAR_TRACK *tp;
 
  	eof_log("eof_set_pro_guitar_fret_or_finger_number() entered", 1);
@@ -8752,14 +8814,18 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 
 					case 1:	//Increment fret value
 						if(oldvalue != 0xFF)	//Don't increment a muted note
+						{
 							newvalue++;
-						fret_diff = 1;
+							fret_diff = 1;
+						}
 					break;
 
 					case 2:	//Decrement fret value
 						if(oldvalue > 0)	//Don't decrement an open note
+						{
 							newvalue--;
-						fret_diff = -1;
+							fret_diff = -1;
+						}
 					break;
 
 					default:
@@ -8775,53 +8841,7 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 					tp->note[ctr]->frets[ctr2] = newvalue;		//Update the string's fret value
 					memset(tp->note[ctr]->finger, 0, 8);		//Initialize all fingers to undefined
 
-					//Transpose the note's slide end position if applicable
-					invalid = 0;	//Track whether a slide cannot transpose
-					flags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
-					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && tp->note[ctr]->slideend)
-					{	//If this note has a defined pitched slide
-						if(fret_diff < 0)
-						{
-							if(abs(fret_diff) >= tp->note[ctr]->slideend)
-							{	//If the change would bring the slide end position at or below fret 0
-								invalid = 1;
-							}
-						}
-						else if(tp->note[ctr]->slideend + fret_diff > tp->numfrets)
-						{	//If the change woudl bring the slide end position above the track's fret limit
-							invalid = 1;
-						}
-						if(invalid)
-						{
-							tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
-						}
-						else
-						{
-							tp->note[ctr]->slideend += fret_diff;	//Adjust the slide's ending by the same number of frets that the note was changed
-						}
-					}
-					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[ctr]->unpitchend)
-					{	//If this note has a defined unpitched slide
-						if(fret_diff < 0)
-						{
-							if(abs(fret_diff) >= tp->note[ctr]->unpitchend)
-							{	//If the change would bring the slide end position at or below fret 0
-								invalid = 1;
-							}
-						}
-						else if(tp->note[ctr]->unpitchend + fret_diff > tp->numfrets)
-						{	//If the change woudl bring the slide end position above the track's fret limit
-							invalid = 1;
-						}
-						if(invalid)
-						{
-							tp->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
-						}
-						else
-						{
-							tp->note[ctr]->unpitchend += fret_diff;	//Adjust the slide's ending by the same number of frets that the note was changed
-						}
-					}
+					(void) eof_adjust_note_slide(tp, ctr, fret_diff);		//Increment/decrement the note's slide end position if applicable, highlight the note if its slide fails to be adjusted
 				}
 			}
 		}

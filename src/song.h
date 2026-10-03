@@ -966,6 +966,11 @@ int eof_pro_guitar_track_add_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long st
 	//Adds a tremolo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 	//If diff is not 0xFF, the tremolo phrase will apply to the specified track difficulty only
 void eof_pro_guitar_track_delete_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
+int eof_adjust_note_slide(EOF_PRO_GUITAR_TRACK *tp, unsigned long notenum, int fret_diff);
+	//If the specified pro guitar note has a pitched or unpitched slide, adjust the end position by the specified difference
+	//Returns -1 if either slide type failed to be adjusted (ie. would bring the end position to 0 or higher than the track's fret count), which will also cause the note in question to be highlighted
+	//Returns 0 if no adjustments are applicable (ie. not a slide note or fret_diff is zero)
+	//Returns 1 if adjustments were made
 void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value);
 	//If fingering view is NOT in effect, alters each selected pro guitar note's fret values on used strings (that match the eof_pro_guitar_fret_bitmask bitmask) based on the parameters:
 	//If function is 0, the applicable strings' fret values are set to the specified value

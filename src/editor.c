@@ -6630,6 +6630,16 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	/* draw fretboard area */
 	rectfill(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, window->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_piano_roll);
 
+	/* draw spectrogram or waveform graph */
+	if(window != eof_window_editor2)
+	{	//Only draw the graphs for the main piano roll
+		if(eof_display_spectrogram)
+			(void) eof_render_spectrogram(eof_spectrogram);
+
+		if(eof_display_waveform)
+			(void) eof_render_waveform(eof_waveform);
+	}
+
 	/* draw start/end point marking */
 	if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
 	{	//If both the start and end points are defined with different timestamps
@@ -6957,15 +6967,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the kick drum lane section would render between the left and right edges of the piano roll
 				rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, y1, lpos + sectionptr->end_pos / eof_zoom, y2, eof_colors[0].lightcolor);
 		}
-	}
-
-	if(window != eof_window_editor2)
-	{	//Only draw the graphs for the main piano roll
-		if(eof_display_spectrogram)
-			(void) eof_render_spectrogram(eof_spectrogram);
-
-		if(eof_display_waveform)
-			(void) eof_render_waveform(eof_waveform);
 	}
 
 	/* draw fretboard strings */

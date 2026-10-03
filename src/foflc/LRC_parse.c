@@ -568,6 +568,9 @@ void Export_LRC(FILE *outf)
 
 	if(Lyrics.verbose)	printf("\nExporting LRC lyrics to file \"%s\"\n\nWriting tags\n",Lyrics.outfilename);
 
+	if(Lyrics.writeutf8bom)
+		WriteUTF8BOM(outf);
+
 //Write tags
 	if(Lyrics.out_format != ILRC_FORMAT)
 	{	//If not writing the IMMERROCK variant of LRC

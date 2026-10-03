@@ -138,6 +138,7 @@ void InitLyrics(void)
 	Lyrics.nofstyle=0;
 	Lyrics.plain=0;
 	Lyrics.message=0;
+	Lyrics.writeutf8bom=0;
 }
 
 void CreateLyricLine(void)
@@ -2718,4 +2719,15 @@ char *RemoveLeadingZeroes(char *str)	//Allocate and return a string representing
 	temp=malloc_err(size+1);		//Allocate enough room to store truncated string AND a NULL terminator
 	strcpy(temp,&(str[ctr]));	//Copy input string, starting from past the leading zeroes
 	return temp;	//Return new string
+}
+
+void WriteUTF8BOM(FILE *outf)
+{
+//Validate parameters
+	assert_wrapper(outf != NULL);
+
+//Write UTF-8 byte order sequence
+	fputc_err(0xEF, outf);
+	fputc_err(0xBB, outf);
+	fputc_err(0xBF, outf);
 }

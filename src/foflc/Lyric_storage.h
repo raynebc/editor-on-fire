@@ -225,6 +225,7 @@ struct _LYRICSSTRUCT_{
 								//If this has a value of 3, some extended ASCII characters are allowed and the XML tag's encoding attribute reflects windows-1252 encoding
 								//If this has a value of 4, all extended ASCII characters are allowed and the XML tag's encoding attribute reflects windows-1252 encoding
 	char message;				//Can be set by an import or export function to indicate some condition was encountered
+	char writeutf8bom;			//If nonzero, indicates that a UTF-8 byte order mark should be written at the beginning of the exported lyric file, so that any Unicode lyrics exported from EOF will display properly.  Applicable export functions should use WriteUTF8BOM() accordingly
 
 //Filenames
 	char *outfilename;		//Stores the name of the output file
@@ -456,6 +457,8 @@ void WritePaddedString(FILE *outf,char *str,unsigned long num,unsigned char padd
 	//written until num # of characters were written.  The NULL terminator is not written
 	//If the length of str is greater than num, it is truncated
 	//If str is NULL, only padding is written to file
+void WriteUTF8BOM(FILE *outf);
+	//Writes a EF BB BF byte sequence to the output file, to be written at the beginning of the file to indicate that it is in UTF-8 Unicode format
 
 
 #ifndef USEMEMWATCH

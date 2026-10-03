@@ -541,6 +541,7 @@ eof_log(eof_log_string, 2);
 		case ELRC_FORMAT:	//Export as extended LRC
 		case ILRC_FORMAT:	//Export as IMMERROCK LRC
 			outf = fopen_err(Lyrics.outfilename,"wt");	//LRC is a text format
+			Lyrics.writeutf8bom = 1;	//Add a UTF-8 byte order mark so if the lyrics are in Unicode, they will display
 			Export_LRC(outf);
 		break;
 
