@@ -386,6 +386,11 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 		(void) pack_fputs("	],\n", fp);
 
 		//Write notes
+		if((sp->beats > 4) && (eof_get_note_pos(sp, track, 0) < sp->beat[4]->pos))
+		{	//If the first note begins before 4 seconds
+			allegro_message("SmashDrums:  Notes before the fifth beat will not appear in game.  Consider adding leading silence to delay the start of the song.");
+			eof_log("\tWarning:  At least one note exists before beat index 4", 2);
+		}
 		for(ctr = 0; ctr < 4; ctr++)
 		{	//For each of the four JSON difficulties
 			if(diffs_written)

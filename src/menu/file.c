@@ -430,6 +430,19 @@ DIALOG eof_ogg_settings_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+DIALOG eof_ogg_settings_2_dialog[] =
+{
+	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
+	{ eof_shadow_box_proc, 4,   200, 192, 206, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
+	{ d_agup_text_proc,       58,  208, 128, 8,   2,   23,  0,    0,      0,   0,   "OGG Settings",   NULL, NULL },
+	{ d_agup_text_proc,       49,  228, 48,  8,   2,   23,  0,    0,      0,   0,   "Encoder Quality",NULL, NULL },
+	{ d_agup_list_proc,       43,  244, 110, 112, 2,   23,  0,    0,      0,   0,   (void *)eof_ogg_list, NULL, NULL },
+	{ d_agup_button_proc,     16,  366, 40,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc,     68,  366, 44,  28,  2,   23,  0,   D_EXIT, 0,   0,   "Auto",             NULL, NULL },
+	{ d_agup_button_proc,     124, 366, 60,  28,  2,   23,  0,  D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
 DIALOG eof_lyric_detections_dialog[]=
 {
 	/*(proc)             (x)  (y)  (w)  (h)  (fg) (bg)  (key) (flags) (d1) (d2) (dp)                      (dp2) (dp3)*/
@@ -2243,24 +2256,50 @@ void eof_apply_display_settings(int mode)
 
 int eof_ogg_settings(void)
 {
+	int retval;
+
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_ogg_settings_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_ogg_settings_dialog);
 	eof_ogg_settings_dialog[3].d1 = eof_ogg_setting;
-	if(eof_popup_dialog(eof_ogg_settings_dialog, 0) == 4)
-	{	//User clicked OK
-		eof_ogg_setting = eof_ogg_settings_dialog[3].d1;
-	}
-	else
-	{
-		return 0;
-	}
+	retval = eof_popup_dialog(eof_ogg_settings_dialog, 0);
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	return 1;
+	if(retval == 4)
+	{	//User clicked OK
+		eof_ogg_setting = eof_ogg_settings_dialog[3].d1;
+	}
+
+	return 0;	//User cancellation
+}
+
+int eof_ogg_settings_2(void)
+{
+	int retval;
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_ogg_settings_2_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_ogg_settings_2_dialog);
+	eof_ogg_settings_2_dialog[3].d1 = eof_ogg_setting;
+	retval = eof_popup_dialog(eof_ogg_settings_2_dialog, 0);
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	if(retval == 4)
+	{	//User clicked OK
+		eof_ogg_setting = eof_ogg_settings_2_dialog[3].d1;
+	}
+	else if(retval == 5)
+	{	//User clicked Auto
+		return INT_MAX;
+	}
+
+	return 0;	//User cancellation
 }
 
 int eof_menu_file_controllers(void)

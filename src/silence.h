@@ -3,7 +3,7 @@
 
 #include <allegro.h>
 
-int eof_add_silence(char * oggfn, unsigned long ms);	//Backs up the currently loaded OGG file if it hasn't been already and appends it to an OGG (containing only silence) of the specified length
+int eof_add_silence(char * oggfn, unsigned long ms);	//Backs up the currently loaded OGG file if it hasn't been already, makes an undo state and appends it to an OGG (containing only silence) of the specified length
 SAMPLE * create_silence_sample(unsigned long ms);
 	//Creates and returns a SAMPLE array of the specified number of milliseconds' worth of silent PCM data, or NULL on error
 	//If a chart is loaded, the current OGG file's bitrate, frequency, etc. are used
@@ -17,7 +17,7 @@ int eof_add_silence(char * oggfn, unsigned long ms);
 	//Backs up the specified OGG file and uses OggCat to insert the specified amount of silence at the beginning of the OGG file
 	//Returns nonzero on error
 int eof_add_silence_recode(char * oggfn, unsigned long ms);
-	//Backs up the specified OGG file and inserts the specified amount of silence at the beginning of the OGG file by processing in PCM WAV format and then re-encoding to OGG format
+	//Backs up the specified OGG file, prompts for a target bitrate, makes an undo state and inserts the specified amount of silence at the beginning of the OGG file by processing in PCM WAV format and then re-encoding to OGG format
 	//Returns nonzero on error
 int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms);
 	//Similar to eof_add_silence_recode(), but decodes the originally converted MP3 file (original.mp3) instead of the OGG file, preserving as much of the original audio quality as possible

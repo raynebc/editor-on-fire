@@ -2196,15 +2196,13 @@ int eof_menu_song_add_silence(void)
 		}
 		else
 		{	//Add silence
-			eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
-
 			if((eof_leading_silence_dialog[11].flags == D_SELECTED) && eof_supports_oggcat)
 			{	//User opted to use oggCat
 				creationmethod = 11;		//Remember this as the default next time
 				retval = eof_add_silence(eof_loaded_ogg_name, silence_length);
 			}
 			else
-			{	//User opted to re-encode
+			{	//User opted to re-encode, use follow up dialog to select bitrate
 				(void) replace_filename(mp3fn, eof_song_path, "original.mp3", sizeof(mp3fn));
 				if(exists(mp3fn))
 				{

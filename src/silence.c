@@ -4,6 +4,7 @@
 #include "dialog.h"
 #include "main.h"
 #include "silence.h"
+#include "undo.h"
 #include "utility.h"
 
 #ifdef USEMEMWATCH
@@ -216,6 +217,9 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 		eof_fix_window_title();
 		return 3;	//Return error:  Couldn't create silent audio
 	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
+
 	(void) replace_filename(wavfn, eof_song_path, "silence.wav", sizeof(wavfn));
 	(void) save_wav(wavfn, silence_sample);
 	destroy_sample(silence_sample);
@@ -316,6 +320,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	unsigned long ctr,index;
 	void * oggbuffer = NULL;
 	int bitrate;
+	int retval;
 
  	eof_log("eof_add_silence_recode() entered", 1);
 
@@ -445,7 +450,16 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", sizeof(soggfn));
 
 	//Obtain an appropriate bitrate
-	if(eof_ogg_settings())
+	retval =eof_ogg_settings_2();
+	if(retval == 0)
+	{	//User cancellation
+		eof_log("\tUser cancellation", 1);
+		return 0;
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
+
+	if(retval < INT_MAX)
 	{	//If the user selected an OGG encoding quality
 		bitrate = eof_ogg_list_bitrate(eof_ogg_setting);		//Use it for the conversion below
 	}
@@ -545,6 +559,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	int channels;
 	unsigned long ctr,index;
 	int bitrate;
+	int retval;
 
  	eof_log("eof_add_silence_recode_mp3() entered", 1);
 
@@ -655,7 +670,16 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 
 	/* encode the audio */
 	//Obtain an appropriate bitrate
-	if(eof_ogg_settings())
+	retval = eof_ogg_settings_2();
+	if(retval == 0)
+	{	//User cancellation
+		eof_log("\tUser cancellation", 1);
+		return 0;
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
+
+	if(retval < INT_MAX)
 	{	//If the user selected an OGG encoding quality
 		bitrate = eof_ogg_list_bitrate(eof_ogg_setting);		//Use it for the conversion below
 	}

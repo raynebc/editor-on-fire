@@ -36,6 +36,7 @@ char * eof_ini_list(int index, int * size);			//Dialog logic to display the char
 char * eof_colors_list(int index, int * size);		//Dialog logic to display the usable color sets in the Preferences dialog
 int eof_ogg_settings(void);					//Launches eof_ogg_settings_dialog, allowing the user to specify an OGG encoding quality setting, returns 0 upon user cancellation
 										//eof_ogg_setting is set to the user selected value, which indexes into the appropriate value in eof_ogg_quality[]
+int eof_ogg_settings_2(void);					//Similar to eof_ogg_settings(), but also has an "auto" button, which if clicked causes this function to return INT_MAX so the calling function can automatically choose a bitrate based on the current chart audio
 int eof_new_lyric_dialog(void);		//Launches the input box to accept the text for a newly created lyric
 int eof_edit_lyric_dialog(void);	//Performs the Edit Lyric action presented in the note menu
 
