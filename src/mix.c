@@ -49,7 +49,7 @@ char eof_mix_claps_note = 63; /* enable all by default */
 char eof_mix_vocal_tones_enabled = 0;
 char eof_mix_midi_tones_enabled = 0;
 char eof_mix_percussion_enabled = 0;
-int eof_selected_percussion_cue = 17;	//The user selected percussion sound (cowbell by default), corresponds to the radio button in the eof_audio_cues_dialog[] array
+int eof_selected_percussion_cue = 28;	//The user selected percussion sound (cowbell by default), corresponds to the radio button in the eof_audio_cues_dialog[] array
 
 int eof_chart_volume = 100;	//Stores the volume level for the chart audio, specified as a percentage
 double eof_chart_volume_multiplier = 1.0;	//This is the value sqrt(volume/100.0), which must be multiplied to the voice's amplitude to adjust for the specified volume

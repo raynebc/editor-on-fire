@@ -2343,6 +2343,7 @@ DIALOG eof_audio_cues_dialog[] =
 	{ d_agup_slider_proc,	176,  88,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_chart_volume_string },
 	{ d_agup_text_proc,		275,  88,  30,  16,   2,  23,    0,      0, 100,   0, eof_chart_volume_string,      NULL, NULL },
 	{ d_agup_text_proc,		16,  108,  64,   8,   2,  23,    0,      0,   0,   0, "Chart pan",    NULL, NULL },
+	{ eof_chart_audio_pan_button_proc,	162, 107,  12, 16, 2,  23,      0,     0,  0,   0, "C", NULL, NULL },
 	{ eof_audio_cues_slider_proc,	176, 108,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_pan, eof_chart_pan_string },
 	{ d_agup_text_proc,		275, 108,  30,  16,   2,  23,    0,      0, 100,   0, eof_chart_pan_string, NULL, NULL },
 	{ d_agup_text_proc,		16,	 128,  64,   8,   2,  23,    0,      0,   0,   0, "Clap volume",                NULL, NULL },
@@ -2361,6 +2362,7 @@ DIALOG eof_audio_cues_dialog[] =
 	{ d_agup_slider_proc,	176, 208,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_midi_tone_volume_string },
 	{ d_agup_text_proc,		275, 208,  30,  16,   2,  23,    0,      0, 100,   0, eof_midi_tone_volume_string, NULL, NULL },
 	{ d_agup_text_proc,		16,  228,  64,   8,   2,  23,    0,      0,   0,   0, "MIDI Tone pan",    NULL, NULL },
+	{ eof_midi_audio_pan_button_proc,	162, 227,  12, 16, 2,  23,      0,     0,  0,   0, "C", NULL, NULL },
 	{ eof_audio_cues_slider_proc,	176, 228,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_pan, eof_midi_tone_pan_string },
 	{ d_agup_text_proc,		275, 228,  30,  16,   2,  23,    0,      0, 100,   0, eof_midi_tone_pan_string, NULL, NULL },
 	{ d_agup_text_proc,		16,  248,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Percussion sound:",    NULL, NULL },
@@ -2402,11 +2404,11 @@ int eof_set_cue_volume(void *dp3, int d2)
 
 	(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "%3d%%", d2);	//Rewrite the specified volume slider string
 	(void) object_message(&eof_audio_cues_dialog[3], MSG_DRAW, 0);			//Have Allegro redraw the volume slider strings
-	(void) object_message(&eof_audio_cues_dialog[9], MSG_DRAW, 0);
-	(void) object_message(&eof_audio_cues_dialog[12], MSG_DRAW, 0);
-	(void) object_message(&eof_audio_cues_dialog[15], MSG_DRAW, 0);
-	(void) object_message(&eof_audio_cues_dialog[18], MSG_DRAW, 0);
-	(void) object_message(&eof_audio_cues_dialog[21], MSG_DRAW, 0);
+	(void) object_message(&eof_audio_cues_dialog[10], MSG_DRAW, 0);
+	(void) object_message(&eof_audio_cues_dialog[13], MSG_DRAW, 0);
+	(void) object_message(&eof_audio_cues_dialog[16], MSG_DRAW, 0);
+	(void) object_message(&eof_audio_cues_dialog[19], MSG_DRAW, 0);
+	(void) object_message(&eof_audio_cues_dialog[22], MSG_DRAW, 0);
 	return 0;
 }
 
@@ -2428,8 +2430,8 @@ int eof_audio_cues_slider_proc(int msg, DIALOG *d, int c)
 		d->d2 = 50;	//Set the slider to the center position
 		(void) snprintf((char *)d->dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "C    ");	//Rewrite the specified volume slider string
 		(void) object_message(d, MSG_DRAW, 0);						//Redraw the slider
-		(void) object_message(&eof_audio_cues_dialog[6], MSG_DRAW, 0);	//Redraw all pan slider strings
-		(void) object_message(&eof_audio_cues_dialog[24], MSG_DRAW, 0);
+		(void) object_message(&eof_audio_cues_dialog[7], MSG_DRAW, 0);	//Redraw all pan slider strings
+		(void) object_message(&eof_audio_cues_dialog[26], MSG_DRAW, 0);
 		return D_O_K;
 	}
 
@@ -2457,9 +2459,41 @@ int eof_set_cue_pan(void *dp3, int d2)
 	{	//Panning to right of center
 		(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "R+%2d", d2 - 50);
 	}
-	(void) object_message(&eof_audio_cues_dialog[6], MSG_DRAW, 0);	//Have Allegro redraw the pan slider strings
-	(void) object_message(&eof_audio_cues_dialog[24], MSG_DRAW, 0);
+	(void) object_message(&eof_audio_cues_dialog[7], MSG_DRAW, 0);	//Have Allegro redraw the pan slider strings
+	(void) object_message(&eof_audio_cues_dialog[26], MSG_DRAW, 0);
 	return 0;
+}
+
+int eof_chart_audio_pan_button_proc(int msg, DIALOG *d, int c)
+{
+	if(msg == MSG_CLICK)
+	{
+		DIALOG *slider = &eof_audio_cues_dialog[6];	//The dialog object for the audio pan slider
+		slider->d2 = 50;	//Set the slider to the center position
+		(void) snprintf((char *)slider->dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "C    ");	//Rewrite the specified volume slider string
+		(void) object_message(slider, MSG_DRAW, 0);	//Redraw the slider
+		(void) object_message(&eof_audio_cues_dialog[7], MSG_DRAW, 0);	//Redraw audio pan slider string
+
+		d->flags &= ~(D_GOTFOCUS | D_GOTMOUSE);	//Remove these statuses so the center button doesn't have its text label highlighted
+		d->flags |= D_SELECTED;					//Toggle the button on so it is immediately toggled off when d_agup_button_proc() is called below
+	}
+	return d_agup_button_proc(msg, d, c);
+}
+
+int eof_midi_audio_pan_button_proc(int msg, DIALOG *d, int c)
+{
+	if(msg == MSG_CLICK)
+	{
+		DIALOG *slider = &eof_audio_cues_dialog[25];	//The dialog object for the midi pan slider
+		slider->d2 = 50;	//Set the slider to the center position
+		(void) snprintf((char *)slider->dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "C    ");	//Rewrite the specified volume slider string
+		(void) object_message(slider, MSG_DRAW, 0);	//Redraw the slider
+		(void) object_message(&eof_audio_cues_dialog[26], MSG_DRAW, 0);	//Redraw midi pan slider string
+
+		d->flags &= ~(D_GOTFOCUS | D_GOTMOUSE);	//Remove these statuses so the center button doesn't have its text label highlighted
+		d->flags |= D_SELECTED;					//Toggle the button on so it is immediately toggled off when d_agup_button_proc() is called below
+	}
+	return d_agup_button_proc(msg, d, c);
 }
 
 int eof_menu_audio_cues(void)
@@ -2472,23 +2506,23 @@ int eof_menu_audio_cues(void)
 	eof_color_dialog(eof_audio_cues_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_audio_cues_dialog);
 	eof_audio_cues_dialog[2].d2 = eof_chart_volume;
-	eof_audio_cues_dialog[5].d2 = eof_chart_pan;
-	eof_audio_cues_dialog[8].d2 = eof_clap_volume;
-	eof_audio_cues_dialog[11].d2 = eof_tick_volume;
-	eof_audio_cues_dialog[14].d2 = eof_tone_volume;
-	eof_audio_cues_dialog[17].d2 = eof_percussion_volume;
-	eof_audio_cues_dialog[20].d2 = eof_midi_tone_volume;
-	eof_audio_cues_dialog[23].d2 = eof_midi_pan;
+	eof_audio_cues_dialog[6].d2 = eof_chart_pan;
+	eof_audio_cues_dialog[9].d2 = eof_clap_volume;
+	eof_audio_cues_dialog[12].d2 = eof_tick_volume;
+	eof_audio_cues_dialog[15].d2 = eof_tone_volume;
+	eof_audio_cues_dialog[18].d2 = eof_percussion_volume;
+	eof_audio_cues_dialog[21].d2 = eof_midi_tone_volume;
+	eof_audio_cues_dialog[25].d2 = eof_midi_pan;
 
-	for(x = 26; x <= 45; x++)
+	for(x = 28; x <= 47; x++)
 	{	//Deselect all vocal percussion radio buttons
 		eof_audio_cues_dialog[x].flags = 0;
 	}
 	eof_audio_cues_dialog[eof_selected_percussion_cue].flags = D_SELECTED;	//Activate the radio button for the current vocal percussion cue
 
-	eof_audio_cues_dialog[46].flags = eof_clap_for_mutes ? D_SELECTED : 0;	//Update the "String mutes trigger clap" option
-	eof_audio_cues_dialog[47].flags = eof_clap_for_ghosts ? D_SELECTED : 0;	//Update the "Ghost notes trigger clap" option
-	eof_audio_cues_dialog[48].flags = eof_multi_pitch_metronome ? D_SELECTED : 0;	//Update the "Use multi-pitch metronome" option
+	eof_audio_cues_dialog[48].flags = eof_clap_for_mutes ? D_SELECTED : 0;	//Update the "String mutes trigger clap" option
+	eof_audio_cues_dialog[49].flags = eof_clap_for_ghosts ? D_SELECTED : 0;	//Update the "Ghost notes trigger clap" option
+	eof_audio_cues_dialog[50].flags = eof_multi_pitch_metronome ? D_SELECTED : 0;	//Update the "Use multi-pitch metronome" option
 
 	//Rebuild the volume/pan slider strings, as they are not guaranteed to be all 100% on launch of EOF since EOF stores the user's last-configured volumes in the config file
 	(void) eof_set_cue_volume(eof_chart_volume_string, eof_chart_volume);
@@ -2500,22 +2534,22 @@ int eof_menu_audio_cues(void)
 	(void) eof_set_cue_volume(eof_midi_tone_volume_string, eof_midi_tone_volume);
 	(void) eof_set_cue_pan(eof_midi_tone_pan_string, eof_midi_pan);
 
-	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 49)			//User clicked OK
+	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 51)			//User clicked OK
 	{
 		eof_chart_volume = eof_audio_cues_dialog[2].d2;				//Store the volume set by the chart volume slider
 		eof_chart_volume_multiplier = sqrt(eof_chart_volume/100.0);	//Store this math so it only needs to be performed once
-		eof_chart_pan = eof_audio_cues_dialog[5].d2;				//Store the pan value set by the chart pan slider
-		eof_clap_volume = eof_audio_cues_dialog[8].d2;				//Store the volume set by the clap cue volume slider
-		eof_tick_volume = eof_audio_cues_dialog[11].d2;				//Store the volume set by the tick cue volume slider
-		eof_tone_volume = eof_audio_cues_dialog[14].d2;			//Store the volume set by the tone cue volume slider
-		eof_percussion_volume = eof_audio_cues_dialog[17].d2;		//Store the volume set by the vocal percussion cue volume slider
-		eof_midi_tone_volume = eof_audio_cues_dialog[20].d2;		//Store the volume set by the MIDI tone volume slider
-		eof_midi_pan = eof_audio_cues_dialog[23].d2;				//Store the pan value set by the MIDI tone pan slider
-		eof_clap_for_mutes = eof_audio_cues_dialog[46].flags == D_SELECTED ? 1 : 0;	//Store the "String mutes trigger clap" option
-		eof_clap_for_ghosts = eof_audio_cues_dialog[47].flags == D_SELECTED ? 1 : 0;	//Store the "Ghost notes trigger clap" option
-		eof_multi_pitch_metronome = eof_audio_cues_dialog[48].flags == D_SELECTED ? 1 : 0;	//Store the "Use multi-pitch metronome" option
+		eof_chart_pan = eof_audio_cues_dialog[6].d2;				//Store the pan value set by the chart pan slider
+		eof_clap_volume = eof_audio_cues_dialog[9].d2;				//Store the volume set by the clap cue volume slider
+		eof_tick_volume = eof_audio_cues_dialog[12].d2;				//Store the volume set by the tick cue volume slider
+		eof_tone_volume = eof_audio_cues_dialog[15].d2;			//Store the volume set by the tone cue volume slider
+		eof_percussion_volume = eof_audio_cues_dialog[18].d2;		//Store the volume set by the vocal percussion cue volume slider
+		eof_midi_tone_volume = eof_audio_cues_dialog[21].d2;		//Store the volume set by the MIDI tone volume slider
+		eof_midi_pan = eof_audio_cues_dialog[25].d2;				//Store the pan value set by the MIDI tone pan slider
+		eof_clap_for_mutes = eof_audio_cues_dialog[48].flags == D_SELECTED ? 1 : 0;	//Store the "String mutes trigger clap" option
+		eof_clap_for_ghosts = eof_audio_cues_dialog[49].flags == D_SELECTED ? 1 : 0;	//Store the "Ghost notes trigger clap" option
+		eof_multi_pitch_metronome = eof_audio_cues_dialog[50].flags == D_SELECTED ? 1 : 0;	//Store the "Use multi-pitch metronome" option
 
-		for(x = 26; x <= 45; x++)
+		for(x = 28; x <= 47; x++)
 		{	//Search for the selected vocal percussion cue
 			if(eof_audio_cues_dialog[x].flags == D_SELECTED)
 			{
@@ -2890,71 +2924,71 @@ int eof_menu_song_legacy_view(void)
 
 void eof_set_percussion_cue(int cue_number)
 {
-	if((cue_number < 17) || (cue_number > 36))
+	if((cue_number < 27) || (cue_number > 46))
 	{	//If the cue number is out of bounds
-		cue_number = 17;	//Reset to cowbell
+		cue_number = 27;	//Reset to cowbell
 	}
 
 	switch(cue_number)
 	{
-		case 17:
+		case 27:
 			eof_sound_chosen_percussion = eof_sound_cowbell;
 		break;
-		case 18:
+		case 28:
 			eof_sound_chosen_percussion = eof_sound_triangle1;
 		break;
-		case 19:
+		case 29:
 			eof_sound_chosen_percussion = eof_sound_triangle2;
 		break;
-		case 20:
+		case 30:
 			eof_sound_chosen_percussion = eof_sound_tambourine1;
 		break;
-		case 21:
+		case 31:
 			eof_sound_chosen_percussion = eof_sound_tambourine2;
 		break;
-		case 22:
+		case 32:
 			eof_sound_chosen_percussion = eof_sound_tambourine3;
 		break;
-		case 23:
+		case 33:
 			eof_sound_chosen_percussion = eof_sound_woodblock1;
 		break;
-		case 24:
+		case 34:
 			eof_sound_chosen_percussion = eof_sound_woodblock2;
 		break;
-		case 25:
+		case 35:
 			eof_sound_chosen_percussion = eof_sound_woodblock3;
 		break;
-		case 26:
+		case 36:
 			eof_sound_chosen_percussion = eof_sound_woodblock4;
 		break;
-		case 27:
+		case 37:
 			eof_sound_chosen_percussion = eof_sound_woodblock5;
 		break;
-		case 28:
+		case 38:
 			eof_sound_chosen_percussion = eof_sound_woodblock6;
 		break;
-		case 29:
+		case 39:
 			eof_sound_chosen_percussion = eof_sound_woodblock7;
 		break;
-		case 30:
+		case 40:
 			eof_sound_chosen_percussion = eof_sound_woodblock8;
 		break;
-		case 31:
+		case 41:
 			eof_sound_chosen_percussion = eof_sound_woodblock9;
 		break;
-		case 32:
+		case 42:
 			eof_sound_chosen_percussion = eof_sound_woodblock10;
 		break;
-		case 33:
+		case 43:
 			eof_sound_chosen_percussion = eof_sound_clap1;
 		break;
-		case 34:
+		case 44:
 			eof_sound_chosen_percussion = eof_sound_clap2;
 		break;
-		case 35:
+		case 45:
 			eof_sound_chosen_percussion = eof_sound_clap3;
 		break;
-		case 36:
+		case 46:
 			eof_sound_chosen_percussion = eof_sound_clap4;
 		break;
 
