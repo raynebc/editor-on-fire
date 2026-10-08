@@ -5931,6 +5931,40 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 				}
 			}
 		}
+	}
+
+	//Notes with dislike names selected
+	if(!ustricmp(macro, "IF_DISLIKE_NOTE_NAMES_SELECTED"))
+	{
+		char *str1, *str2;
+
+		if(eof_selection.track == eof_selected_track)
+		{	//If any existing note selection reflects the active track
+			for(ctr = 0; ctr < tracksize; ctr++)
+			{	//For each note in the active track
+				if(eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+				{	//If the note is selected and in the active track difficulty
+					str1 = eof_get_note_name(eof_song, eof_selected_track, ctr);
+					if(eof_check_string(str1))
+					{	//If the note has a defined name that isn't just white space
+						for(ctr2 = ctr + 1; ctr2 < tracksize; ctr2++)
+						{	//For each remaining note in the active track
+							if(eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
+							{	//If this remaining note is selected and in the active track difficulty
+								str2 = eof_get_note_name(eof_song, eof_selected_track, ctr2);
+								if(eof_check_string(str2))
+								{	//If this remaining note has a defined name that isn't just white space
+									if(strcmp(str1, str2) != 0)
+									{	//If the note names are not identical (case sensitive match)
+										return 3;	//True
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 
 		return 2;	//False
 	}

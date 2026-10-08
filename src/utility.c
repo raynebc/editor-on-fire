@@ -967,7 +967,7 @@ int eof_get_clipboard(void)
 		eof_log("!Failed to buffer os_clipboard.txt to memory", 1);
 		return -1;
 	}
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRead from OS clipboard:  \"%s\"", eof_os_clipboard);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRead from clipboard:  \"%s\"", eof_os_clipboard);
 	eof_log(eof_log_string, 2);
 	if(eof_gas_clipboard)
 		play_sample(eof_sound_gas3, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip upon success, if enabled

@@ -733,6 +733,14 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_IR_COMMENTS_DEFINED%</td>
 <td>Evaluates as true if the song comments ("Loading Text" in <a href="functions.htm#properties">Song>Properties</a>) is defined or any of the arrangement specific comments ("Comment_Lead", "Comment_Rhythm" or "Comment_Bass") are defined in "<a href="functions.htm#inisettings">Song>INI Settings</a>"), in which case the %IR_COMMENTS_DEFINED_STRING% macro will print a string listing which comments are defined.</td>
 </tr>
+<tr>
+<td>%IF_DISLIKE_NOTES_SELECTED%</td>
+<td>Evaluates as true if multiple notes are selected and they are substantially different (ie. one has sustain and one does not, one uses different lanes than another, one has different statuses than another, one has ghost/accent status on different lanes than another).</td>
+</tr>
+<tr>
+<td>%IF_DISLIKE_NOTE_NAMES_SELECTED%</td>
+<td>Evaluates as true if multiple notes are selected and have different explicitly defined names, case sensitive (ie. one is named "AMaj" and one is named "Amaj").  Notes that have no defined name are not included in this check.</td>
+</tr>
 </tbody>
 </table><br>
 

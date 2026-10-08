@@ -396,6 +396,10 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 			Lyrics.noplus = 1;		//Disable plus output
 			Lyrics.grouping = 2;	//Enable line grouping
 		}
+		if(format == ILRC_FORMAT)
+		{	//Allow IMMERROCK formatted lyrics to retain the native UTF-8 encoding of the lyrics as they are in the EOF project, skipping any conversion to extended ASCII
+			Lyrics.writeutf8bom = 1;
+		}
 		Lyrics.nohyphens = 3;		//Disable hyphen output
 		Lyrics.filter = DuplicateString("^=%#/");	//Use default filter list
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
@@ -463,7 +467,8 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 				{	//If this string has any characters that can't be displayed as standard ASCII
 					exascii = 1;	//Note this
 				}
-				(void) eof_convert_to_extended_ascii(buffer, (int)sizeof(buffer) - 1);	//Convert the lyric from UTF-8 back into extended ASCII encoding
+				if(!Lyrics.writeutf8bom)
+					(void) eof_convert_to_extended_ascii(buffer, (int)sizeof(buffer) - 1);	//Convert the lyric from UTF-8 back into extended ASCII encoding, only if not exporting directly to UTF-8 format
 				AddLyricPiece(buffer, tp->lyric[lyrctr]->pos, tp->lyric[lyrctr]->pos + tp->lyric[lyrctr]->length, pitch, 0);
 					//Add the lyric to the Lyrics structure
 

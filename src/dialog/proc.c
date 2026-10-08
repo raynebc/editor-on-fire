@@ -56,15 +56,15 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 		{	//If either paste combination was detected
 			if((eof_get_clipboard() == 0) && eof_os_clipboard)
 			{	//If the clipboard was read and buffered
-				for(i = 0; eof_os_clipboard[i] != '\0'; i++)
+				for(i = 0; ugetat(eof_os_clipboard, i) != '\0'; i++)
 				{	//For each character read from the clipboard
 					if(ustrlen(d->dp) < d->d1)
 					{	//If the string can add one more character before its limit is reached
 						for(j = 0; !string || (string[j] != '\0'); j++)	//Search all characters of the accepted characters list, if one is defined
 						{
-							if(!string || (string[j] == (eof_os_clipboard[i])))
+							if(!string || (string[j] == ugetat(eof_os_clipboard, i)))
 							{	//If the list of acceptable characters is undefined, or if this character from the clipboard is acceptable
-								uinsert(d->dp, d->d2++, eof_os_clipboard[i]);	//Insert the next character from the clipboard, advance the cursor in the input field by one character
+								uinsert(d->dp, d->d2++, ugetat(eof_os_clipboard, i));	//Insert the next character from the clipboard, advance the cursor in the input field by one character
 								break;
 							}
 						}
@@ -184,13 +184,11 @@ int eof_edit_proc(int msg, DIALOG *d, int c)
 		{	//If either paste combination was detected
 			if((eof_get_clipboard() == 0) && eof_os_clipboard)
 			{	//If the clipboard was read and buffered
-				for(i = 0; eof_os_clipboard[i] != '\0'; i++)
+				for(i = 0; ugetat(eof_os_clipboard, i) != '\0'; i++)
 				{	//For each character read from the clipboard
-///					simulate_ukeypress(eof_os_clipboard[i], 0);	//Add it to the keyboard buffer to be handled by d_agup_edit_proc()	//This doesn't work, characters are processed out of order
-///					d_agup_edit_proc(MSG_CHAR, d, eof_os_clipboard[i]);	//Pass it as a character input message to ensure they are processed in the correct order	//This doesn't work either
 					if(ustrlen(d->dp) < d->d1)
 					{	//If the string can add one more character before its limit is reached
-						uinsert(d->dp, d->d2++, eof_os_clipboard[i]);	//Insert the next character from the clipboard, advance the cursor in the input field by one character
+						uinsert(d->dp, d->d2++, ugetat(eof_os_clipboard, i));	//Insert the next character from the clipboard, advance the cursor in the input field by one character
 					}
 					else
 						break;	//No more characters can be pasted

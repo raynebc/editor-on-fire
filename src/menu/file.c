@@ -2271,6 +2271,7 @@ int eof_ogg_settings(void)
 	if(retval == 4)
 	{	//User clicked OK
 		eof_ogg_setting = eof_ogg_settings_dialog[3].d1;
+		return 1;	//Successful selection
 	}
 
 	return 0;	//User cancellation
