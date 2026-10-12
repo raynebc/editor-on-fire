@@ -2949,6 +2949,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					char istuplet = 0;		//Set to nonzero if the note is explicitly in a tuplet (ie. triplet), which will cause any "triplet feel" notation to be ignored
 
 					char isupbeat = 0, isdownbeat = 0;	//Used to determine whether a note falls on an up beat or down beat, for triplet feel handling
+					char isrest = 0;
 					double beat_length;
 
 					unpitchend = 0;	//Assume no unpitched slide unless one is defined
@@ -2964,6 +2965,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					if(bytemask & 64)
 					{	//Beat is a rest
 						(void) pack_getc(vars.inf);	//Rest beat type (empty/rest)
+						isrest = 1;
 					}
 					byte = pack_getc(vars.inf);		//Read beat duration
 					if((byte < -2) || (byte > 4))
@@ -3031,11 +3033,17 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					//Determine whether triplet feel will influence this note's length
 					if(tripletfeel && (byte == tripletfeel) && !istuplet)
 					{	//If triplet feel is in effect, this note is the length that is altered by triplet feel and this note isn't in a tuplet, check if this note occurs on a down beat or up beat position
+						unsigned this_down_beat_percent, this_up_beat_percent, this_measure_pos_percent;
+
 						beat_length = 1.0 / (double)curnum;	//The amount of a measure (from 0 to 1) that represents one beat (the distance between each up beat)
-						for(ctr4 = 0; ctr4 < curnum; ctr4++)
-						{	//For each beat in this measure
+						if(tripletfeel == 2)
+						{	//If 1/16 note triplet feel is in effect
+							beat_length /= 2.0;		//The distance between each up beat is half as long
+						}
+						this_down_beat_percent = 0;
+						for(ctr4 = 0; this_down_beat_percent < 100; ctr4++)
+						{	//For each triplet feel down beat position in this measure
 							double this_down_beat, this_up_beat;
-							unsigned this_down_beat_percent, this_up_beat_percent, this_measure_pos_percent;
 
 							this_down_beat = (double)ctr4 * beat_length;			//How far into the measure this down beat is
 							this_up_beat = this_down_beat + (beat_length * (4.0 / 6.0));	//When triplet feel has influenced the up beat note, the down beat note would have to be one half beat plus one triplet of a beat further ahead
@@ -4292,6 +4300,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//If this tie note defined a stronger bend than the original note
 								vars.np[ctr2]->bendstrength = bendstrength;	//Apply this tie note's bend strength
 							}
+						}
+						else if(isrest)
+						{
+#ifdef GP_IMPORT_DEBUG
+							if(isdownbeat)
+								eof_log("\t\t\t(Rest lengthened as a triplet feel down beat)", 1);
+							else if(isupbeat)
+								eof_log("\t\t\t(Rest shortened as a triplet feel up beat)", 1);
+#endif
 						}
 
 						if(grace)
