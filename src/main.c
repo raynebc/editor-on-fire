@@ -215,6 +215,8 @@ int         eof_note_tails_clickable = 0;		//If nonzero, when the mouse hovers o
 int         eof_lyric_tails_clickable = 0;		//If nonzero, when the mouse hovers over a lyric tail instead of just the note/lyric head, that lyric becomes the hover note
 int         eof_ctrl_tab_skip_empty_tracks = 0;		//If nonzero, CTRL+TAB and SHIFT+CTRL+TAB shortcuts skip empty tracks
 int         eof_dont_check_for_updates = 0;	//If nonzero, EOF will skip checking for updates upon launch
+int         eof_last_new_event_track_specific_status = 0;	//Tracks the last selected/deselected status of the track specific checkbox in the various event addition dialogs
+int         eof_convert_measure_note_gap = 1;	//If nonzero, and a 1/# measure note gap is in use, where the denominator is a multiple of 4, eof_get_effective_minimum_note_distance() will divide that denominator by 4 to treat it as a 1/# beat note gap to get results that match the logic for the built in grid snap values like 1/32
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
 int         eof_dont_auto_name_double_stops = 0;	//If nonzero, the chord detection logic will not name chords that have only two pitches (unique or otherwise)
 int         eof_section_auto_adjust = 1;		//If nonzero, section and FHP positions are updated when all their contained notes are simultaneously moved
@@ -1402,6 +1404,16 @@ void eof_fix_window_title(void)
 	}
 	if(eof_song && eof_song_loaded)
 	{
+		if(eof_check_string(eof_song->tags->artist))
+		{	//If the artist name is defined
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), eof_song->tags->artist);	//Append it to the window title
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), " - ");
+		}
+		if(eof_check_string(eof_song->tags->title))
+		{	//If the song title is defined
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), eof_song->tags->title);	//Append it to the window title
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), " - ");
+		}
 		eof_cat_track_difficulty_string(eof_window_title, sizeof(eof_window_title));	//Append the track difficulty's title to the window title
 
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))

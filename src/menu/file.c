@@ -200,7 +200,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ eof_window_proc,0,   48,  482, 476, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ eof_window_proc,0,   48,  490, 476, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
 	{ d_agup_button_proc,12,  484, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
 	{ d_agup_button_proc,86,  484, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
 	{ d_agup_button_proc,160, 484, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
@@ -257,6 +257,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  319, 175, 16,  2,   23,  0,    0,      1,   0,   "Make lyric tails clickable",NULL, NULL },
 	{ d_agup_check_proc, 16,  335, 210, 16,  2,   23,  0,    0,      1,   0,   "CTRL+TAB skips empty tracks",NULL, NULL },
 	{ d_agup_check_proc, 248, 399, 168, 16,  2,   23,  0,    0,      1,   0,   "Don't check for updates",NULL, NULL },
+	{ d_agup_check_proc, 248, 415, 234, 16,  2,   23,  0,    0,      1,   0,   "Convert measure note dist. to beat",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1661,6 +1662,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[54].flags = eof_lyric_tails_clickable ? D_SELECTED : 0;				//Make lyric tails clickable
 	eof_preferences_dialog[55].flags = eof_ctrl_tab_skip_empty_tracks ? D_SELECTED : 0;			//CTRL+TAB skips empty tracks
 	eof_preferences_dialog[56].flags = eof_dont_check_for_updates ? D_SELECTED : 0;			//Don't check for updates
+	eof_preferences_dialog[57].flags = eof_convert_measure_note_gap ? D_SELECTED : 0;		//Convert measure note dist. to beat
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1785,6 +1787,7 @@ int eof_menu_file_preferences(void)
 			eof_lyric_tails_clickable = (eof_preferences_dialog[54].flags == D_SELECTED ? 1 : 0);
 			eof_ctrl_tab_skip_empty_tracks = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
 			eof_dont_check_for_updates = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
+			eof_convert_measure_note_gap = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1845,6 +1848,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[54].flags = D_SELECTED;			//Make lyric tails clickable
 			eof_preferences_dialog[55].flags = 0;					//CTRL+TAB skips empty tracks
 			eof_preferences_dialog[56].flags = 0;					//Don't check for updates
+			eof_preferences_dialog[57].flags = D_SELECTED;			//Convert measure note dist. to beat
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 

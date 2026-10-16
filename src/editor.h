@@ -55,7 +55,7 @@ void eof_select_beat(unsigned long beat);
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
 	//Accepts a timestamp, and updates sp->grid_pos[] with the positions of each grid snap immediately at/before the timestamp and all remaining grid snaps for the beat/measure (depending on which of the two the grid snap setting is set to use)
 	//The position of the grid snap nearest to the given timestamp is stored in sp->pos
-	//sp->previous_snap and sp->next_snap are populated with the grid snap positions before/after sp->pos, with the limitation that previous_snap is no earlier than the beat's position itself (it won't go into the previous beat)
+	//sp->previous_snap and sp->next_snap are populated with the grid snap positions before/after sp->pos, with the limitation that previous_snap is no earlier than the beat's/measure's position itself (it won't go into the previous beat/measure)
 void eof_snap_length_logic(EOF_SNAP_DATA * sp);
 	//Calculates the grid snap interval length for sp->beat
 	//sp should be initialized appropriately, such as with eof_snap_logic(), before being passed to this function
@@ -67,6 +67,9 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result);
 	//Upon success, the resulting timestamp is returning through result and nonzero is returned
 	//If the proposed grid snap position is within 1ms of the input position, a value of 1 is returned, otherwise 2 is returned
 	//Returns zero on error or if the requested grid snap position does not exist
+unsigned long eof_prev_grid_snap(unsigned long pos);
+	//Returns the timestamp of the previous grid snap position, or 0 on error
+	//Uses eof_snap_logic() on the position one millisecond earlier than the specified position to allow for finding a grid snap in a previous beat/measure
 unsigned long eof_next_grid_snap(unsigned long pos);
 	//Returns the timestamp of the next grid snap position, or 0 on error
 int eof_is_grid_snap_position(unsigned long pos);

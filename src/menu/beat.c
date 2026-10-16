@@ -2506,12 +2506,15 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 	EOF_TEXT_EVENT temp = {{0}, 0, 0, 0, 0, 0};
 	unsigned long newflags = 0;
 	unsigned long newtrack = 0;
+	char addnew = 0;
 
 	if(!ptr)
 	{	//If a new event is to be added
 		ptr = &temp;
 		ptr->flags = flags;
 		eof_events_add_dialog[0].dp = eof_events_add_dialog_string1;	//Update the dialog window title to reflect that a new event is being added
+		addnew = 1;	//Remember that a new event is being added
+		eof_events_add_dialog[3].flags = (eof_last_new_event_track_specific_status ? D_SELECTED : 0);	//Initialize the "specific to track" checkbox to the state it was last in when an event was added
 	}
 	else
 	{	//An existing event is being edited
@@ -2624,6 +2627,10 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 			}
 			newtrack = eof_selected_track;
 		}
+		if(addnew)
+		{	//If a new event was added
+			eof_last_new_event_track_specific_status = ((eof_events_add_dialog[3].flags == D_SELECTED) ? 1 : 0);	//Remember whether the "specific to track" option was used
+		}
 
 		if(eof_check_string(eof_etext) && (ustrcmp(ptr->text, eof_etext) || (newtrack != ptr->track) || (newflags != ptr->flags)))
 		{	//If the user entered any nonspace characters, and (in the case of editing an existing event) any of the fields were altered
@@ -2662,6 +2669,7 @@ void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsig
 {
 	EOF_TEXT_EVENT temp = {{0}, 0, 0, 0, 0, 0};
 	unsigned long newtrack = 0, newpos = 0;
+	char addnew = 0;
 
 	if(!ptr)
 	{	//If a new event is to be added
@@ -2703,6 +2711,8 @@ void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsig
 	else
 	{
 		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", timestamp);	//Initialize the event's time field with the specified position
+		addnew = 1;	//Remember that a new event is being added
+		eof_floating_events_add_dialog[5].flags = (eof_last_new_event_track_specific_status ? D_SELECTED : 0);	//Initialize the "specific to track" checkbox to the state it was last in when an event was added
 	}
 	(void) ustrzcpy(eof_etext, sizeof(eof_etext), ptr->text);
 
@@ -2716,6 +2726,10 @@ void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsig
 		if(eof_floating_events_add_dialog[5].flags & D_SELECTED)
 		{	//User opted to make this a track specific event
 			newtrack = eof_selected_track;
+		}
+		if(addnew)
+		{	//If a new event was added
+			eof_last_new_event_track_specific_status = ((eof_floating_events_add_dialog[5].flags == D_SELECTED) ? 1 : 0);	//Remember whether the "specific to track" option was used
 		}
 		newpos = atol(eof_etext2);
 
@@ -3423,7 +3437,7 @@ int eof_rocksmith_section_dialog_add(void)
 	unsigned long flags = 0, newflags = 0, ctr;
 	unsigned char track = 0, newtrack = 0;	//By default, new sections won't be track specific
 	char *emptystring = "";
-	char *string = emptystring, *newstring;
+	char *string = emptystring, *newstring, addnew = 0;
 	EOF_TEXT_EVENT *ptr = NULL;
 
 	eof_cursor_visible = 0;
@@ -3468,6 +3482,8 @@ int eof_rocksmith_section_dialog_add(void)
 	else
 	{	//Otherwise update the dialog window title to reflect that a new section is being added
 		eof_rocksmith_section_dialog[0].dp = eof_rocksmith_section_dialog_string1;
+		addnew = 1;	//Remember that a new event is being added
+		eof_rocksmith_section_dialog[3].flags = (eof_last_new_event_track_specific_status ? D_SELECTED : 0);	//Initialize the "specific to track" checkbox to the state it was last in when an event was added
 	}
 
 	if(eof_popup_dialog(eof_rocksmith_section_dialog, 0) == 4)
@@ -3477,6 +3493,10 @@ int eof_rocksmith_section_dialog_add(void)
 		if(eof_rocksmith_section_dialog[2].flags == D_SELECTED)
 		{	//If the user also opted to add it as a RS phrase
 			newflags |= EOF_EVENT_FLAG_RS_PHRASE;	//The event will be both a RS phrase and a RS section
+		}
+		if(addnew)
+		{	//If a new event was added
+			eof_last_new_event_track_specific_status = ((eof_rocksmith_section_dialog[3].flags == D_SELECTED) ? 1 : 0);	//Remember whether the "specific to track" option was used
 		}
 		if(eof_rocksmith_section_dialog[3].flags == D_SELECTED)
 		{	//If the user also opted to make it specific to the active track
@@ -3519,13 +3539,16 @@ int eof_rocksmith_event_dialog_add(void)
 	eof_conditionally_center_dialog(eof_rocksmith_event_dialog);
 
 	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
+	eof_rocksmith_event_dialog[2].flags = (eof_last_new_event_track_specific_status ? D_SELECTED : 0);	//Initialize the "specific to track" checkbox to the state it was last in when an event was added
 
 	if(eof_popup_dialog(eof_rocksmith_event_dialog, 0) == 3)
 	{	//User clicked OK
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);		//Make an undo state
+		eof_last_new_event_track_specific_status = 0;	//Reset this status
 		if(eof_rocksmith_event_dialog[2].flags == D_SELECTED)
 		{	//If the user also opted to make it specific to the active track
 			track = eof_selected_track;
+			eof_last_new_event_track_specific_status = 1;	//Remember that the "specific to track" option was used to add the last event
 		}
 		(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_rs_predefined_events[eof_rocksmith_event_dialog[1].d1].string, track, EOF_EVENT_FLAG_RS_EVENT, 0);
 		eof_sort_events(eof_song);
@@ -3553,6 +3576,7 @@ int eof_rocksmith_mover_dialog_add(void)
 
 	eof_etext[0] = '\0';
 	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
+	eof_mover_add_dialog[3].flags = (eof_last_new_event_track_specific_status ? D_SELECTED : 0);	//Initialize the "specific to track" checkbox to the state it was last in when an event was added
 
 	if(eof_popup_dialog(eof_mover_add_dialog, 2) == 4)
 	{	//User clicked OK
@@ -3564,9 +3588,11 @@ int eof_rocksmith_mover_dialog_add(void)
 		}
 
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+		eof_last_new_event_track_specific_status = 0;	//Reset this status
 		if(eof_mover_add_dialog[3].flags == D_SELECTED)
 		{	//If the user also opted to make it specific to the active track
 			track = eof_selected_track;
+			eof_last_new_event_track_specific_status = 1;	//Remember that the "specific to track" option was used to add the last event
 		}
 		(void) snprintf(str, sizeof(str) - 1, "moveR%u", number);
 		(void) eof_song_add_text_event(eof_song, eof_selected_beat, str, track, EOF_EVENT_FLAG_RS_PHRASE, 0);
@@ -3924,15 +3950,19 @@ int eof_menu_beat_estimate_bpm(void)
 		eof_clear_input();
 		if(eof_song->tags->tempo_map_locked || (alert(NULL, "Would you like to apply this tempo to the first beat?", NULL, "&Yes", "&No", 'y', 'n') != 1))
 			return D_O_K;	//If the tempo map is locked or the user does not opt to apply the estimated tempo, return immediately
-
-		startbeat = 0;		//The tempo will apply starting with the first beat marker
 	}
 
 	//Apply the detected tempo to the applicable beat and all subsequent beats until the next anchor is found
+	if(eof_note_auto_adjust)
+	{	//If the note auto-adjust preference is enabled
+		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+	}
+
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(result < DBL_EPSILON)
 		result = DBL_EPSILON;	//Bounds check result to be a positive, nonzero double float value
 	ppqn = 60000000.0 / result;
+	startbeat = 0;		//The tempo will apply starting with the first beat marker
 	eof_song->beat[startbeat]->ppqn = ppqn;	//Apply the tempo to the first beat in the applicable range of beats
 	for(ctr = startbeat + 1; ctr < eof_song->beats; ctr++)
 	{	//For the remaining beats in the project
@@ -3944,6 +3974,12 @@ int eof_menu_beat_estimate_bpm(void)
 	}
 	eof_calculate_beats(eof_song);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+
+	if(eof_note_auto_adjust)
+	{	//If the note auto-adjust preference is enabled
+		(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+	}
+	eof_fixup_notes(eof_song);
 
 	return D_O_K;
 }

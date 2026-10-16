@@ -531,6 +531,30 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 	}
 }
 
+unsigned long eof_prev_grid_snap(unsigned long pos)
+{
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
+	unsigned long beat;
+
+	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
+		return 0;
+
+	if(pos == 0)
+		return 0;	//There's no timestamp earlier than 0ms
+
+	pos--;	//Target 1ms earlier so if the target was at the start of a measure, the grid snap logic can go back into the previous beat/measure
+	beat = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
+	if(!eof_beat_num_valid(eof_song, beat))	//If the seek position is outside the chart
+		return 0;
+
+	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
+		return 0;
+
+	eof_snap_logic(&temp, pos);				//Find the previous grid snap position that occurs before the specified position
+
+	return temp.previous_snap;
+}
+
 unsigned long eof_next_grid_snap(unsigned long pos)
 {
 	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
@@ -720,6 +744,7 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 {
 	char eof_snap_mode_bak, eof_custom_snap_measure_bak;
 	int eof_snap_interval_bak;
+	unsigned long prevpos;
 
 	//Back up current grid snap settings
 	eof_snap_mode_bak = eof_snap_mode;
@@ -731,19 +756,19 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 	eof_custom_snap_measure = per_measure;	//Selects either per-beat or per-measure grid snap
 	eof_snap_interval = intervals;	//The number of intervals per beat/measure
 
-	eof_snap_logic(&eof_tail_snap, pos);	//Find note gap size
+	prevpos = eof_prev_grid_snap(pos);
 
 	//Restore original grid snap settings
 	eof_snap_mode = eof_snap_mode_bak;
 	eof_custom_snap_measure = eof_custom_snap_measure_bak;
 	eof_snap_interval = eof_snap_interval_bak;
 
-	if(eof_tail_snap.snap_length > pos)
+	if(!prevpos)
 	{	//If the position one note gap before the specified position is not valid
 		return ULONG_MAX;	//Position not found
 	}
 
-	return eof_tail_snap.previous_snap;
+	return prevpos;
 }
 
 int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum, unsigned long *closestintervalpos, int midi_friendly)
@@ -7312,7 +7337,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, eof_color_grid_lines);
 			}
 			gridpos = eof_next_grid_snap(gridpos);	//Find the next grid snap
-			if(gridpos == lastgridpos)
+			if(gridpos <= lastgridpos)
 			{	//If the grid snap logic couldn't find another grid snap position
 				break;
 			}

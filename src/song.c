@@ -10525,6 +10525,7 @@ unsigned long eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned lon
 {
 	long next;
 	unsigned long nextnotepos, cutoff;
+	int intervals = eof_min_note_distance, per_measure = 0;	//Default settings reflect 1/# beat note gap
 
 	if(!sp || !track || (track >= sp->tracks) || (notenum >= eof_get_track_size(sp, track)))
 		return ULONG_MAX;	//Invalid parameters
@@ -10538,8 +10539,21 @@ unsigned long eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned lon
 
 	nextnotepos = eof_get_note_pos(sp, track, next);
 
+	//Determine the note gap settings to use
+	if(eof_min_note_distance_intervals == 1)
+	{	//Using a 1/# measure note gap
+		if((eof_min_note_distance % 4 == 0) && eof_convert_measure_note_gap)
+		{	//If the interval count is divisible by 4, and the user preference to convert this into a 1/# beat note gap is enabled
+			intervals = eof_min_note_distance / 4;	//Remap to 1/# beat note gap so it matches the built-in grid snap intervals being per beat
+		}
+		else
+		{
+			per_measure = 1;	//Perform per-measure note gap calculation
+		}
+	}
+
 	//Since the next note may occur on a time signature change, the note gap must be calculated based on the time signature in effect BEFORE the next note
-	cutoff = eof_get_position_minus_one_grid_snap_length(nextnotepos - 1, eof_min_note_distance, (eof_min_note_distance_intervals == 1) ? 1 : 0);	//Determine where the note is required to end in order to meet the min. note distance setting requirement
+	cutoff = eof_get_position_minus_one_grid_snap_length(nextnotepos, intervals, per_measure);	//Determine where the note is required to end in order to meet the min. note distance setting requirement
 
 	if((cutoff == ULONG_MAX)  || (cutoff >= nextnotepos))
 		return ULONG_MAX;	//Could not determine the appropriate cutoff position for the specified note
