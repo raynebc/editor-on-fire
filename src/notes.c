@@ -2962,6 +2962,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "RS_FIRST_TECH_NOTE_LACKING_TARGET"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_tech_note_missing_target);
+
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
@@ -3055,13 +3062,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	if(!ustricmp(macro, "RS_FIRST_TECH_NOTE_LACKING_TARGET"))
-	{
-		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_tech_note_missing_target);
-
-		return 1;
-	}
-
 	if(!ustricmp(macro, "MOUSE_AREA"))
 	{
 		dest_buffer[0] = '\0';
@@ -3112,6 +3112,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		return 1;
 	}
+	///END OF DEBUGGING MACROS
 
 	return 0;	//Macro not supported
 }

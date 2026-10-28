@@ -12633,6 +12633,7 @@ int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long not
 				tom |= 16;
 			}
 		}
+		tom |= (note & 32);	//Track lane 6 gems
 	}
 
 	*match_bitmask = tom;

@@ -434,20 +434,6 @@ void eof_load_config(char * fn)
 	eof_color_seek_line_raw = get_config_hex("colors", "eof_color_seek_line", 0x00FF00);						//The RGB equivalent of makecol(0, 255, 0) (green)
 	eof_color_lane_line_raw = get_config_hex("colors", "eof_color_lane_line", 0xFFFFFF);						//The RGB equivalent of makecol(255, 255, 255) (white)
 
-	///Deprecated color names that were changed to be more consistent.  In case the config file hasn't written them to config with the new naming, load these after the current names
-	eof_color_notes_panel_error_bg_raw = get_config_hex("colors", "eof_notes_panel_error_bg_color", eof_color_notes_panel_error_bg_raw);
-	eof_color_notes_panel_error_fg_raw = get_config_hex("colors", "eof_notes_panel_error_fg_color", eof_color_notes_panel_error_fg_raw);
-	eof_color_notes_panel_warning_bg_raw = get_config_hex("colors", "eof_notes_panel_warning_bg_color", eof_color_notes_panel_warning_bg_raw);
-	eof_color_notes_panel_warning_fg_raw = get_config_hex("colors", "eof_notes_panel_warning_fg_color", eof_color_notes_panel_warning_fg_raw);
-	eof_color_notes_panel_success_bg_raw = get_config_hex("colors", "eof_notes_panel_success_bg_color", eof_color_notes_panel_success_bg_raw);
-	eof_color_notes_panel_success_fg_raw = get_config_hex("colors", "eof_notes_panel_success_fg_color", eof_color_notes_panel_success_fg_raw);
-	eof_color_notes_panel_alert_bg_raw = get_config_hex("colors", "eof_notes_panel_alert_bg_color", eof_color_notes_panel_alert_bg_raw);
-	eof_color_notes_panel_alert_fg_raw = get_config_hex("colors", "eof_notes_panel_alert_fg_color", eof_color_notes_panel_alert_fg_raw);
-	eof_color_notes_panel_info_bg_raw = get_config_hex("colors", "eof_notes_panel_info_bg_color", eof_color_notes_panel_info_bg_raw);
-	eof_color_notes_panel_info_fg_raw = get_config_hex("colors", "eof_notes_panel_info_fg_color", eof_color_notes_panel_info_fg_raw);
-	eof_color_tab_notation_bg_raw = get_config_hex("colors", "eof_tab_notation_bg_color", eof_color_tab_notation_bg_raw);
-	eof_color_tab_notation_fg_raw = get_config_hex("colors", "eof_tab_notation_fg_color", eof_color_tab_notation_fg_raw);
-
 	if(exists(fn))
 	{	//Only try to load the controller buttons if the config file exists, otherwise the defaults will be erased
 		eof_controller_load_config(&eof_guitar, "guitar");

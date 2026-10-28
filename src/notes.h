@@ -123,6 +123,7 @@ unsigned long eof_count_num_notes_with_gem_designation(unsigned char gems, unsig
 	//Examines all notes in the active track difficulty
 	//Returns the number of those that have the specified note gem bitmask (as created by eof_read_macro_gem_designations() )
 	//If the track is a drum track, the note must have the specified toms and the specified cymbals to be counted as a match
+	//A lane 6 drum gem is considered a tom
 	//A gem bitmask of 255 indicates an open note
 unsigned long eof_count_track_num_notes_with_flag(unsigned long flags);
 	//Examines all notes in the active track

@@ -153,15 +153,13 @@ Note and Beat Editing:
         grid snap.  If grid snap is disabled, notes move by one
         millisecond instead.
 
-    Mouse Wheel:
+    Mouse Wheel or [ and ] keys:
 
         Move up and down to lengthen or shorten the selected note
 
         Holding Shift while scrolling the mouse wheel changes the note length by HALF
         of the current grid snap value.
     
-        You can also press the '[]' keys to do the same
-
 	Turn off Grid Snap to adjust in 100ms increments.  Hold Shift while lengthening or
         shortening for small adjustments (10ms).  Hold both Ctrl and Shift to make even
         smaller adjustments (1ms).

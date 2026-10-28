@@ -15,7 +15,7 @@ p {text-indent: 1cm}
 
 <h1><a name="Edit">What is this?</a></h1>
 <blockquote>
-The Notes panel is an additional informational panel that is meant for users to customize to display whatever information is wanted.  This is achieved by defining static text as well as various macros that will translate dynamically to text.  For the sake of this documentation, "printed" text will refer to the text that is written to the Notes panel.  Some of these macros are conditional, so you can control whether text or macros are displayed at all, such as to define content that will display only for the vocal track, or for content that will only display if a note is currently selected or for when specific error conditions are present.  Content is normally defined line by line, where one line in the text file corresponds to a single line in the Notes panel, but one line can use the %NEWLINE% control macro to add a line break and begin printing on the next line in the panel.  Macros are case insensitive (you can use any amount of upper or lower case letters to type them), but it's recommended to use upper case to make it more easy to identify where macros occur in the notes.panel.txt file.  It's also generally more traditional to type macros in all capital letters.<br>
+The Notes panel is an additional informational panel that is meant for users to customize to display whatever information is wanted.  It's also used as a way to provide many panels of specialized information and checks that are game-specific.  This is achieved by defining static text as well as various macros that will translate dynamically to text.  For the sake of this documentation, "printed" text will refer to the text that is written to the Notes panel.  Some of these macros are conditional, so you can control whether text or macros are displayed at all, such as to define content that will display only for the vocal track, or for content that will only display if a note is currently selected or for when specific error conditions are present.  Content is normally defined line by line, where one line in the text file corresponds to a single line in the Notes panel, but one line can use the %NEWLINE% control macro to add a line break and begin printing on the next line in the panel.  Macros are case insensitive (you can use any amount of upper or lower case letters to type them), but it's recommended to use upper case to make it more easy to identify where macros occur in the notes.panel.txt file.  It's also generally more traditional to type macros in all capital letters.<br>
 </blockquote>
 
 
@@ -685,8 +685,20 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the project's tempo map is locked.</td>
 </tr>
 <tr>
+<td>%IF_CLICK_AND_DRAG_DISABLED%</td>
+<td>Evaluates as true "Song>Disable click and drag" is enabled.</td>
+</tr>
+<tr>
 <td>%IF_ACTIVE_TRACK_RS_ANY_TECHNIQUES_MISSING_SUSTAIN%</td>
 <td>Evaluates as true if the active pro guitar track has any pro guitar notes that have no sustain but do have a technique that requires sustain (bend, slide, vibrato or tremolo), in which case the %RS_FIRST_TECHNIQUE_MISSING_SUSTAIN% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
+</tr>
+<tr>
+<td>%IF_ACTIVE_TRACK_RS_ANY_NOTES_NAME_MAJ_CONFLICT%</td>
+<td>Evaluates as true if the active pro guitar track has any pro guitar notes with a name including "maj" in all lowercase (which would be renamed by Rocksmith to incorrectly show it as a minor chord), in which case the %RS_FIRST_NOTE_NAME_MAJ_CONFLICT% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
+</tr>
+<tr>
+<td>%IF_ACTIVE_TRACK_RS_ANY_FINGER_VIOLATIONS%</td>
+<td>Evaluates as true if the active pro guitar track has any pro guitar notes with an invalid fingering (such as one that conflicts with the effective fret hand position or handshape or if the note should have no fingering due to being an open note), in which case the %RS_FIRST_FINGER_VIOLATION% macro will print the location of the first offending note and %RS_FIRST_FINGER_VIOLATION_REASON% will print the reason that note is cited.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
 </tr>
 <tr>
 <td>%IF_IS_FINGERING_VIEW%</td>
@@ -1065,6 +1077,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <td>Prints the length of the selected note.  If no note is selected, "None" is printed.</td>
 </tr>
 <tr>
+<td>%SELECTED_NOTE_END_POS%</td>
+<td>Prints the end position of the selected note.  If no note is selected, "None" is printed.</td>
+</tr>
+<tr>
 <td>%SELECTED_NOTE_NAME%</td>
 <td>Prints the name (ie. defined by <a href="functions.htm#editname">Note>Edit Name</a>) of the selected note.  If the selected note has no defined name, no text is printed.  If no note is selected, "None" is printed.</td>
 </tr>
@@ -1231,6 +1247,18 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%RS_FIRST_TECHNIQUE_MISSING_SUSTAIN%</td>
 <td>Prints the location of the first culprit of the %IF_RS_ANY_TECHNIQUES_MISSING_SUSTAIN% conditional macro (the first pro guitar note that has bend, pitched/unpitched slide, vibrato or tremolo status but has no sustain).</td>
+</tr>
+<tr>
+<td>%RS_FIRST_NOTE_NAME_MAJ_CONFLICT%</td>
+<td>Prints the location of the first culprit of the %IF_ACTIVE_TRACK_RS_ANY_NOTES_NAME_MAJ_CONFLICT% conditional macro (the first pro guitar note that has a name including "maj" in all lowercase, which would be renamed by Rocksmith to incorrectly show it as a minor chord).</td>
+</tr>
+<tr>
+<td>%RS_FIRST_FINGER_VIOLATION%</td>
+<td>Prints the location of the first culprit of the %IF_ACTIVE_TRACK_RS_ANY_FINGER_VIOLATIONS% conditional macro (the first pro guitar note with a fingering definition error).</td>
+</tr>
+<tr>
+<td>%RS_FIRST_FINGER_VIOLATION_REASON%</td>
+<td>Prints the reason that the first culprit of the %IF_ACTIVE_TRACK_RS_ANY_FINGER_VIOLATIONS% conditional macro is cited (ie. for having a fingering that conflicts with the effective fret hand position or handshape or should have no fingering due to being an open note).</td>
 </tr>
 <tr>
 <td>%%</td>
@@ -1573,6 +1601,10 @@ RSNAP:  BEATABLE notes with right snap status</td>
 <tr>
 <td>%IR_COMMENTS_DEFINED_STRING%</td>
 <td>Prints a list of comments that will export to IMMERROCK which is created by the %IF_IR_COMMENTS_DEFINED% conditional macro.</td>
+</tr>
+<tr>
+<td>%RS_FIRST_TECH_NOTE_LACKING_TARGET%</td>
+<td>Prints the location of the first culprit of the %IF_ACTIVE_TRACK_RS_ANY_TECH_NOTES_LACK_TARGET% conditional macro (the first tech note that does not overlap any note).</td>
 </tr>
 <tr>
 <td>%TOP_OF_2D_PANEL_SHOWS%</td>
