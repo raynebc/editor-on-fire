@@ -4749,12 +4749,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	if(!ustricmp(macro, "IF_RS_NO_DEFAULT_TONE_DEFINED"))
 	{
 		if(tp)
-		{	//If the active track is a pro guitar track
-			if(!tp->tonechanges)
-			{	//If there are no tone changes
-				dest_buffer[0] = '\0';
-				return 3;	//True
-			}
+		{	//If the active track is a pro guitar track, if there are no tone changes, the tone defined for the arrangement in DLCB is the one automatically in effect so no default needs to be defined
 			eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
 			if(eof_track_rs_tone_names_list_strings_num > 1)
 			{	//If multiple tones are used
@@ -5744,21 +5739,24 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 				for(ctr2 = 0; ctr2 < eof_song->vocal_track[0]->lyrics; ctr2++)
 				{	//For each lyric
 					EOF_LYRIC *lyricptr = eof_song->vocal_track[0]->lyric[ctr2];
-					if((lyricptr->pos >= lineptr->start_pos) && (lyricptr->pos <= lineptr->end_pos))
+					if(lyricptr->pos > lineptr->end_pos)
+						break;	//If this and all remaining lyrics are after the end of the lyric line, stop checking lyrics for this line
+
+					if(lyricptr->pos >= lineptr->start_pos)
 					{	//If this lyric is in the line
 						length += ustrlen(lyricptr->text);
 						if(!ustrchr(lyricptr->text, '-') && !ustrchr(lyricptr->text, '='))
 						{	//If this lyric contains neither a hyphen nor an equal sign
 							length++;	//The next lyric will automatically be separated from this one by a space
 						}
-						if(!ustrchr(lyricptr->text, '-'))
+						if(ustrchr(lyricptr->text, '-'))
 						{	//If this lyric does contain a hyphen
 							length--;		//It won't be written to the lyrics as it's for grouping only, don't count it in the lyric's length
 						}
 						if(length > threshold_length)
 						{
 							eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
-							snprintf(eof_notes_macro_lyric_line_exceeding_length, sizeof(eof_notes_macro_lyric_line_exceeding_length) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
+							snprintf(eof_notes_macro_lyric_line_exceeding_length, sizeof(eof_notes_macro_lyric_line_exceeding_length) - 1, "pos %s : \"...%s...\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric at the point where the limit is exceeded
 							dest_buffer[0] = '\0';
 							return 3;	//True
 						}

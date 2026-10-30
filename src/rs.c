@@ -1748,7 +1748,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		(void) pack_fputs("<song version=\"8\">\n", fp);
 	}
 	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64, 0, 0, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64, 4, 0, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, arrangement_name, 32, 0, 0, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
@@ -1820,12 +1820,12 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs(buffer, fp);
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <capo>%u</capo>\n", tp->capo);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256, 0, 0, 0, NULL);	//Replace any special characters in the artist song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256, 4, 0, 0, NULL);	//Replace any special characters in the artist song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistNameSort>%s</artistNameSort>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256, 0, 0, 0, NULL);	//Replace any special characters in the album song property with escape sequences if necessary
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256, 4, 0, 0, NULL);	//Replace any special characters in the album song property with escape sequences if necessary
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumName>%s</albumName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32, 0, 0, 0, NULL);	//Replace any special characters in the year song property with escape sequences if necessary

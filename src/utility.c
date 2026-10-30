@@ -1000,6 +1000,7 @@ int eof_set_clipboard(char *text)
 	fp = pack_fopen("os_clipboard.txt", "w");	//Try to open the file for writing
 	if(fp)
 	{
+		eof_write_utf8_bom(fp);		//Writ UTF-8 BOM so Get-Content interprets the text properly
 		(void) pack_fputs(text, fp);	//Write specified text to the file
 		(void) pack_fclose(fp);
 	}
@@ -1013,8 +1014,7 @@ int eof_set_clipboard(char *text)
 	//For Windows, use a native command line utility to populate the clipboard
 		char syscommand[1024];
 
-///		(void) snprintf(syscommand, sizeof(syscommand) - 1, "echo %s|clip", text);	//This method has problems with special characters because they would need to escaped, feed the text file into clip.exe instead
-		(void) snprintf(syscommand, sizeof(syscommand) - 1, "clip < os_clipboard.txt");
+		(void) snprintf(syscommand, sizeof(syscommand) - 1, "powershell -WindowStyle Minimized -command \"Get-Content os_clipboard.txt | Set-Clipboard\"");
 		retval = eof_system(syscommand);
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWrote to OS clipboard:  \"%s\"", text);
 		eof_log(eof_log_string, 2);
@@ -1025,6 +1025,16 @@ int eof_set_clipboard(char *text)
 	//Otherwise for other Operating Systems, just use os_clipboard.txt as a clipboard that is internal to EOF
 		return retval;
 	#endif
+}
+
+void eof_write_utf8_bom(PACKFILE *fp)
+{
+	if(fp)
+	{
+		pack_putc(0xEF, fp);
+		pack_putc(0xBB, fp);
+		pack_putc(0xBF, fp);
+	}
 }
 
 unsigned long eof_pack_read_vlv(PACKFILE *fp, unsigned long *byte_counter)

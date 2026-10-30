@@ -2298,6 +2298,7 @@ int eof_ogg_settings_2(void)
 	if(retval == 4)
 	{	//User clicked OK
 		eof_ogg_setting = eof_ogg_settings_2_dialog[3].d1;
+		return 1;	//Successful selection
 	}
 	else if(retval == 5)
 	{	//User clicked Auto

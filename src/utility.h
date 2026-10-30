@@ -93,8 +93,10 @@ int eof_get_clipboard(void);
 	//Returns nonzero on error
 int eof_set_clipboard(char *text);
 	//Deletes and recreates os_clipboard.txt to include the specified text
-	//In Windows, then attempts to write the specified text to the OS clipboard
+	//In Windows, then attempts to write the specified text to the OS clipboard using Set-Clipboard
 	//Returns nonzero on error
+void eof_write_utf8_bom(PACKFILE *fp);
+	//Writes the UTF-8 byte order mark sequence (0xEF, 0xBB, 0xBF) to the specified file stream
 
 unsigned long eof_pack_read_vlv(PACKFILE *fp, unsigned long *byte_counter);
 	//Reads and returns a variable length value from the specified PACKFILE handle, returns ULONG_MAX on error
