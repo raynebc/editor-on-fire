@@ -8,6 +8,7 @@
 #include "menu/beat.h"
 #include "menu/note.h"
 #include "note.h"
+#include "rs.h"
 #include "song.h"	//Include before beat.h for EOF_SONG struct definition
 #include "utility.h"
 #include "beat.h"
@@ -4142,6 +4143,18 @@ eof_log("\tThird pass complete", 1);
 			}
 		}
 	}
+
+//Apply the last-set arrangement types for each pro guitar track, but ONLY for empty tracks, since the contents of populated tracks should only depend on the imported MIDI
+	if(!eof_get_track_size_all(sp, EOF_TRACK_PRO_BASS))
+		eof_apply_arrangement_string(sp, EOF_TRACK_PRO_BASS);
+	if(!eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR))
+		eof_apply_arrangement_string(sp, EOF_TRACK_PRO_GUITAR);
+	if(!eof_get_track_size_all(sp, EOF_TRACK_PRO_BASS_22))
+		eof_apply_arrangement_string(sp, EOF_TRACK_PRO_BASS_22);
+	if(!eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR_22))
+		eof_apply_arrangement_string(sp, EOF_TRACK_PRO_GUITAR_22);
+	if(!eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR_B))
+		eof_apply_arrangement_string(sp, EOF_TRACK_PRO_GUITAR_B);
 
 //#ifdef EOF_DEBUG_MIDI_IMPORT
 eof_log("\tMIDI import complete", 1);

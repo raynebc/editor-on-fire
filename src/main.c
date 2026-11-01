@@ -341,7 +341,7 @@ char        eof_last_part_real_guitar_bonus_arr_type[EOF_ARR_CONFIG_STR_SIZE] = 
 char        eof_current_notes_panel_path[1024] = {0};	//The path to the current text file to display in the Notes panel (any non full path is expected to be relative to EOF's program folder)
 char        eof_loaded_song_name[1024] = {0};			//The file name (minus the folder path) of the active project
 char        eof_loaded_ogg_name[1024] = {0};			//The full path of the loaded OGG file
-char        eof_window_title[4096] = {0};
+char        eof_window_title[1024] = {0};
 int         eof_quit = 0;
 unsigned long eof_main_loop_ctr = 0;
 double      eof_main_loop_fps = 0.0;
@@ -1491,6 +1491,7 @@ void eof_fix_window_title(void)
 	{
 		(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "No Song");
 	}
+
 	set_window_title(eof_window_title);
 	eof_window_title_dirty = 0;
 }

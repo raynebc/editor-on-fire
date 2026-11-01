@@ -611,24 +611,28 @@ int parse_xml_attribute_text(char *buffer, size_t size, char *target, char *inpu
 	if(!buffer || !target || !input)
 		return 0;	//Invalid parameters
 
-	ptr = strcasestr_spec(input, target);	//Get the pointer to the first byte after the target attribute
-	if(!ptr)
-	{	//If the attribute is not present
-		return 0;	//Return failure
+	//Find the first result of the target string followed by an equal sign
+	ptr = input;	//Start at the beginning of the input string
+	while(1)
+	{
+		ptr = strcasestr_spec(ptr, target);	//Get the pointer to the first byte after the next instance of the target attribute string
+		if(!ptr)
+		{	//If the attribute is not present
+			return 0;	//Return failure
+		}
+		while((*ptr != '\0') && isspace(*ptr))
+		{	//While the end of the string hasn't been reached
+			ptr++;	//Skip whitespace
+		}
+		if(*ptr == '=')
+		{	//The next character is expected to be an equal sign
+			ptr++;	//If so, seek past the equal sign
+			break;	//Break from the loop
+		}
 	}
-
 	if(size == 0)
 		return 1;	//Do nothing more than the search if buffer size is 0
 
-	while((*ptr != '\0') && isspace(*ptr))
-	{	//While the end of the string hasn't been reached
-		ptr++;	//Skip whitespace
-	}
-	if(*ptr != '=')
-	{	//The next character is expected to be an equal sign
-		return 0;	//If not, return failure
-	}
-	ptr++;
 	while((*ptr != '\0') && isspace(*ptr))
 	{	//While the end of the string hasn't been reached
 		ptr++;	//Skip whitespace

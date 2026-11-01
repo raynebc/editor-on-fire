@@ -2,9 +2,9 @@
 
 #ifdef ALLEGRO_WINDOWS
 //For the online update check, including Windows related headers should be done immediately after including Allegro's header
-#include <winalleg.h>
-#include <wininet.h>	//For DeleteUrlCacheEntry()
-#include <urlmon.h>	//For URLDownloadToFile()
+	#include <winalleg.h>
+	#include <wininet.h>	//For DeleteUrlCacheEntry()
+	#include <urlmon.h>	//For URLDownloadToFile()
 #endif
 
 #include <ctype.h>
