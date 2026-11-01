@@ -768,21 +768,25 @@ void RS_Load(FILE *inf)
 				if(!parse_xml_rs_timestamp("time", buffer, &timevar))
 				{	//If the timestamp was not readable
 					printf("Error reading timestamp on line #%lu.  Aborting", processedctr);
+					free(buffer);
 					exit_wrapper(1);
 				}
 				if(!parse_xml_attribute_number("note", buffer, &note))
 				{	//If the pitch was not readable
 					printf("Error reading pitch on line #%lu.  Aborting", processedctr);
+					free(buffer);
 					exit_wrapper(2);
 				}
 				if(!parse_xml_rs_timestamp("length", buffer, &length))
 				{	//If the length was not readable
 					printf("Error reading length on line #%lu.  Aborting", processedctr);
+					free(buffer);
 					exit_wrapper(3);
 				}
 				if(!parse_xml_attribute_text(lyric, sizeof(lyric), "lyric", buffer))
 				{	//If the lyric text could not be read
 					printf("Error reading lyric text on line #%lu.  Aborting", processedctr);
+					free(buffer);
 					exit_wrapper(4);
 				}
 				shrink_xml_text(lyric2, sizeof(lyric2), lyric);		//Condense XML escape sequences to normal text

@@ -489,6 +489,7 @@ unsigned long eof_preview_line_end_lyric[2] = {0};
 int eof_windows_argc = 0;
 wchar_t ** eof_windows_internal_argv;
 char ** eof_windows_argv;
+WNDPROC eof_original_allegro_window_proc = NULL;	//Used to store the original Allegro Windows event processor, which will be supplanted with a wrapper that catches calls to set the program window title, sending them to a Windows API function that supports Unicode text
 #endif
 
 /* fret/tuning editing arrays */
@@ -1390,8 +1391,25 @@ void eof_cat_track_difficulty_string(char *str, unsigned long buffersize)
 	}
 }
 
+#ifdef ALLEGRO_WINDOWS
+	// This intercepts messages BEFORE Allegro can see them
+	static LRESULT CALLBACK eof_unicode_title_window_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+	{
+		if (msg == WM_SETTEXT)
+		{
+			// If Allegro tries to overwrite the text with its ANSI buffer,
+			// intercept it and pass it to the Unicode capable Windows function instead
+			return DefWindowProcW(hwnd, WM_SETTEXT, 0, lp);
+		}
+
+		return CallWindowProc((FARPROC)eof_original_allegro_window_proc, hwnd, msg, wp, lp);	//Otherwise pass the event to the original Allegro window event handler
+	}
+#endif
+
 void eof_fix_window_title(void)
 {
+	static int unicode_handler_installed = 0;	//Tracks whether the Allegro window event processor was replaced
+
 	eof_log("eof_fix_window_title() entered", 2);
 
 	if(eof_changes)
@@ -1491,6 +1509,29 @@ void eof_fix_window_title(void)
 	{
 		(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "No Song");
 	}
+
+#ifdef ALLEGRO_WINDOWS
+	HWND hwnd = win_get_window();
+	if(!unicode_handler_installed)
+	{	//If Allegro's window event processor hasn't been replaced yet
+		SetLastError(0);
+		eof_original_allegro_window_proc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)eof_unicode_title_window_proc);
+		if(GetLastError() == 0)
+		{	//If the installation of the callback function succeeded
+			unicode_handler_installed = 1;
+		}
+	}
+	if(unicode_handler_installed)
+	{	//Call the Unicode-aware set Window title function if applicable
+		wchar_t utf16title[1024] = {0};
+		if(uconvert(eof_window_title, U_UTF8, (char *)(&utf16title[0]), U_UNICODE, 2048))
+		{	//If the window title string was converted to UTF16
+			SetWindowTextW(hwnd, utf16title);
+		}
+		eof_window_title_dirty = 0;
+		return;
+	}
+#endif
 
 	set_window_title(eof_window_title);
 	eof_window_title_dirty = 0;
