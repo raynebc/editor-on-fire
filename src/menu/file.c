@@ -34,6 +34,7 @@
 #include "../tuning.h"
 #include "../undo.h"
 #include "../utility.h"
+#include "../waveform.h"
 #include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "edit.h"	//For eof_menu_edit_undo()
 #include "file.h"
@@ -258,6 +259,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  335, 210, 16,  2,   23,  0,    0,      1,   0,   "CTRL+TAB skips empty tracks",NULL, NULL },
 	{ d_agup_check_proc, 248, 399, 168, 16,  2,   23,  0,    0,      1,   0,   "Don't check for updates",NULL, NULL },
 	{ d_agup_check_proc, 248, 415, 234, 16,  2,   23,  0,    0,      1,   0,   "Convert measure note dist. to beat",NULL, NULL },
+	{ d_agup_check_proc, 248, 431, 210, 16,  2,   23,  0,    0,      1,   0,   "Auto enable/recreate waveform",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -955,6 +957,14 @@ int eof_menu_file_load_ogg(void)
 	}
 	eof_music_seek(EOF_SEEK_POS);
 	(void) replace_filename(eof_last_ogg_path, returnedfn, "", sizeof(eof_last_ogg_path));
+
+	if(eof_waveform && eof_display_waveform && eof_auto_show_waveform)
+	{	//If the user preference was to automatically recreate the waveform graph upon loading a different OGG file, and the waveform graph was being displayed
+		eof_log("\t\t\tAuto-recreating waveform", 1);
+		(void) eof_menu_song_waveform();	//Toggle the waveform graph off
+		(void) eof_menu_song_waveform();	//Toggle the waveform graph on
+	}
+
 	eof_log("\t\t\tOGG loaded", 1);
 
 	return 1;
@@ -1663,6 +1673,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[55].flags = eof_ctrl_tab_skip_empty_tracks ? D_SELECTED : 0;			//CTRL+TAB skips empty tracks
 	eof_preferences_dialog[56].flags = eof_dont_check_for_updates ? D_SELECTED : 0;			//Don't check for updates
 	eof_preferences_dialog[57].flags = eof_convert_measure_note_gap ? D_SELECTED : 0;		//Convert measure note dist. to beat
+	eof_preferences_dialog[58].flags = eof_auto_show_waveform ? D_SELECTED : 0;				//Auto enable/recreate waveform
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1788,6 +1799,7 @@ int eof_menu_file_preferences(void)
 			eof_ctrl_tab_skip_empty_tracks = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
 			eof_dont_check_for_updates = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 			eof_convert_measure_note_gap = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
+			eof_auto_show_waveform = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1849,6 +1861,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[55].flags = 0;					//CTRL+TAB skips empty tracks
 			eof_preferences_dialog[56].flags = 0;					//Don't check for updates
 			eof_preferences_dialog[57].flags = D_SELECTED;			//Convert measure note dist. to beat
+			eof_preferences_dialog[58].flags = 0;					//Auto enable/recreate waveform
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 

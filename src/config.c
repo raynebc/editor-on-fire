@@ -280,6 +280,7 @@ void eof_load_config(char * fn)
 	eof_dont_check_for_updates = get_config_int("preferences", "eof_dont_check_for_updates", 0);
 	eof_last_new_event_track_specific_status = get_config_int("preferences", "eof_last_new_event_track_specific_status", 0);
 	eof_convert_measure_note_gap = get_config_int("preferences", "eof_convert_measure_note_gap", 1);
+	eof_auto_show_waveform = get_config_int("preferences", "eof_auto_show_waveform", 0);
 	eof_render_grid_lines = get_config_int("preferences", "eof_render_grid_lines", 0);
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
 	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);
@@ -833,6 +834,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_dont_check_for_updates", eof_dont_check_for_updates);
 	set_config_int("preferences", "eof_last_new_event_track_specific_status", eof_last_new_event_track_specific_status);
 	set_config_int("preferences", "eof_convert_measure_note_gap", eof_convert_measure_note_gap);
+	set_config_int("preferences", "eof_auto_show_waveform", eof_auto_show_waveform);
 	set_config_int("preferences", "eof_render_grid_lines", eof_render_grid_lines);
 	set_config_int("preferences", "eof_auto_complete_fingering", eof_auto_complete_fingering);
 	set_config_int("preferences", "eof_rbn_export_slider_hopo", eof_rbn_export_slider_hopo);

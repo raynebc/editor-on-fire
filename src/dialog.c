@@ -68,7 +68,7 @@ static int eof_keyboard_shortcut = 0;
 static int eof_main_menu_activated = 0;
 int eof_close_menu = 0;	//A variable that can be set to nonzero to try to force the dialog logic closed, as some menu functions seem to get stuck and stop processing input until an Escape keypress or mouse click
 
-char eof_menu_track_names[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
+char eof_menu_track_names[EOF_TRACKS_MAX][EOF_NAME_LENGTH + 1] = {{0}};
 	//A list of the names of each track, built by eof_prepare_menus()
 
 //Logic for tracking click and drag for the dialog window title bar

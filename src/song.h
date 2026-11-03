@@ -379,7 +379,6 @@ extern char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1];
 	//Note: EOF_NOTE_SPECIAL references the same difficulty that the dance track uses for "Challenge" difficulty
 
 
-#define EOF_TRACK_NAME_SIZE		31
 typedef struct
 {
 	char track_format;						//Specifies which track format this is, using one of the macros above

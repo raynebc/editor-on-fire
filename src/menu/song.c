@@ -35,8 +35,8 @@
 #include "../memwatch.h"
 #endif
 
-char eof_track_selected_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE+1] = {{0}};
-	//Allow an extra leading space due to the checkmark erasing the first character in each string
+char eof_track_selected_menu_text[EOF_TRACKS_MAX][EOF_NAME_LENGTH+EOF_NAME_LENGTH+5] = {{0}};
+	//Allow enough characters to display the native track name, user-defined alternate name, parentheses, a space, an extra leading space for the populated indicator and a NULL
 
 char eof_raw_midi_track_error[] = "(error)";
 struct eof_MIDI_data_track *eof_parsed_MIDI;
@@ -332,9 +332,14 @@ void eof_prepare_song_menu(void)
 			eof_track_selected_menu[i].flags = 0;
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				ptr[0] = ' ';	//Add a leading space
-				(void) ustrzcpy(&(ptr[1]), sizeof(eof_track_selected_menu_text[0]), eof_song->track[i+1]->name);
-					//Append the track name to the menu string, starting at index 1
+				if((eof_song->track[i+1]->flags & EOF_TRACK_FLAG_ALT_NAME) && eof_check_string(eof_song->track[i+1]->altname))
+				{	//If the user defined an alternate name for the track, display that and the native name in parentheses
+					(void) uszprintf(ptr, sizeof(eof_track_selected_menu_text[0]), " %s (%s)", eof_song->track[i+1]->altname, eof_song->track[i+1]->name);
+				}
+				else
+				{	//Otherwise just display the native name
+					(void) uszprintf(ptr, sizeof(eof_track_selected_menu_text[0]), " %s", eof_song->track[i+1]->name);
+				}
 			}
 			else
 			{	//Write a blank string for the track name

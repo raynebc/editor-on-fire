@@ -217,6 +217,7 @@ int         eof_ctrl_tab_skip_empty_tracks = 0;		//If nonzero, CTRL+TAB and SHIF
 int         eof_dont_check_for_updates = 0;	//If nonzero, EOF will skip checking for updates upon launch
 int         eof_last_new_event_track_specific_status = 0;	//Tracks the last selected/deselected status of the track specific checkbox in the various event addition dialogs
 int         eof_convert_measure_note_gap = 1;	//If nonzero, and a 1/# measure note gap is in use, where the denominator is a multiple of 4, eof_get_effective_minimum_note_distance() will divide that denominator by 4 to treat it as a 1/# beat note gap to get results that match the logic for the built in grid snap values like 1/32
+int         eof_auto_show_waveform = 0;		//If nonzero, automatically enables the waveform graph whenever a project is loaded and recreates the waveform if it's enabled at the time an OGG file is loaded/changed
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
 int         eof_dont_auto_name_double_stops = 0;	//If nonzero, the chord detection logic will not name chords that have only two pitches (unique or otherwise)
 int         eof_section_auto_adjust = 1;		//If nonzero, section and FHP positions are updated when all their contained notes are simultaneously moved
@@ -5847,6 +5848,12 @@ void eof_init_after_load(char initaftersavestate)
 	eof_sort_and_merge_overlapping_sections(eof_song->vocal_track[0]->line, &eof_song->vocal_track[0]->lines);	//Sort and remove overlapping lyric lines
 	eof_check_and_log_lyric_line_errors(eof_song, 0);
 	eof_reset_lyric_preview_lines();
+
+	if(!initaftersavestate && eof_auto_show_waveform)
+	{	//If the user preference was to automatically enable the waveform graph upon loading/creating a project
+		eof_log("\tAuto-creating waveform", 1);
+		(void) eof_menu_song_waveform();	//Toggle the waveform graph on
+	}
 
 	eof_log("\tInitialization after load complete", 1);
 }

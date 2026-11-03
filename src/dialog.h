@@ -25,7 +25,7 @@ extern char eof_etext9[1024];
 extern char eof_etext10[1024];
 extern char *eof_help_text;
 extern char eof_ctext[8][1024];
-extern char eof_menu_track_names[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE];
+extern char eof_menu_track_names[EOF_TRACKS_MAX][EOF_NAME_LENGTH + 1];
 
 extern int eof_close_menu;	//Set to nonzero to signal to eof_popup_dialog() that the menus should be closed
 						//ALT key shortcuts must be checked for in this function and allowed to close the main menu system for other functions to detect them
