@@ -349,6 +349,15 @@ void eof_prepare_beat_menu(void)
 
 	if(eof_song && eof_song_loaded)
 	{	//If a song is loaded
+		if(eof_rocksmith_focus)
+		{	//If non Rocksmith related menu items are to be hidden
+			eof_beat_menu[19].flags = D_DISABLED | D_HIDDEN;	//Hide "Beat>Place section"
+		}
+		else
+		{
+			eof_beat_menu[19].flags = 0;
+		}
+
 		//Several beat menu items are disabled below if the tempo map is locked.  Clear those items' flags in case the lock was removed
 		eof_beat_menu[6].flags = 0;		//Add
 		eof_beat_menu[7].flags = 0;		//Delete

@@ -198,6 +198,17 @@ void eof_prepare_track_menu(void)
 	{//If a chart is loaded
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+		if(eof_rocksmith_focus)
+		{	//If non Rocksmith related menu items are to be hidden
+			eof_track_menu[2].flags = D_DISABLED | D_HIDDEN;	//Hide "Track>IMMERROCK>"
+			eof_track_menu[6].flags = D_DISABLED | D_HIDDEN;	//Hide "Track>Set difficulty>"
+		}
+		else
+		{
+			eof_track_menu[2].flags = 0;
+			eof_track_menu[6].flags = 0;
+		}
+
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active

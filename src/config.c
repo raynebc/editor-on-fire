@@ -138,6 +138,8 @@ void eof_load_config(char * fn)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tApplied default track %u from configuration file.", eof_selected_track);
 	eof_log(eof_log_string, 1);
 	eof_note_type = get_config_int("preferences", "eof_note_type", EOF_NOTE_AMAZING);
+	eof_note_type_i = get_config_int("preferences", "eof_note_type_i", EOF_NOTE_AMAZING);
+	eof_note_type_v = get_config_int("preferences", "eof_note_type_v", EOF_NOTE_SUPAEASY);
 	eof_hide_drum_tails = get_config_int("preferences", "hide_drum_tails", 0);
 	eof_hide_note_names = get_config_int("preferences", "eof_hide_note_names", 0);
 	eof_disable_sound_processing = get_config_int("preferences", "eof_disable_sound_processing", 0);
@@ -281,6 +283,7 @@ void eof_load_config(char * fn)
 	eof_last_new_event_track_specific_status = get_config_int("preferences", "eof_last_new_event_track_specific_status", 0);
 	eof_convert_measure_note_gap = get_config_int("preferences", "eof_convert_measure_note_gap", 1);
 	eof_auto_show_waveform = get_config_int("preferences", "eof_auto_show_waveform", 0);
+	eof_rocksmith_focus = get_config_int("preferences", "eof_rocksmith_focus", 0);
 	eof_render_grid_lines = get_config_int("preferences", "eof_render_grid_lines", 0);
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
 	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);
@@ -759,6 +762,8 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_zoom", eof_zoom);
 	set_config_int("preferences", "eof_selected_track", eof_selected_track);
 	set_config_int("preferences", "eof_note_type", eof_note_type);
+	set_config_int("preferences", "eof_note_type_i", eof_note_type_i);
+	set_config_int("preferences", "eof_note_type_v", eof_note_type_v);
 	set_config_int("preferences", "hide_drum_tails", eof_hide_drum_tails);
 	set_config_int("preferences", "eof_hide_note_names", eof_hide_note_names);
 	set_config_int("preferences", "eof_disable_sound_processing", eof_disable_sound_processing);
@@ -835,6 +840,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_last_new_event_track_specific_status", eof_last_new_event_track_specific_status);
 	set_config_int("preferences", "eof_convert_measure_note_gap", eof_convert_measure_note_gap);
 	set_config_int("preferences", "eof_auto_show_waveform", eof_auto_show_waveform);
+	set_config_int("preferences", "eof_rocksmith_focus", eof_rocksmith_focus);
 	set_config_int("preferences", "eof_render_grid_lines", eof_render_grid_lines);
 	set_config_int("preferences", "eof_auto_complete_fingering", eof_auto_complete_fingering);
 	set_config_int("preferences", "eof_rbn_export_slider_hopo", eof_rbn_export_slider_hopo);

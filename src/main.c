@@ -218,6 +218,7 @@ int         eof_dont_check_for_updates = 0;	//If nonzero, EOF will skip checking
 int         eof_last_new_event_track_specific_status = 0;	//Tracks the last selected/deselected status of the track specific checkbox in the various event addition dialogs
 int         eof_convert_measure_note_gap = 1;	//If nonzero, and a 1/# measure note gap is in use, where the denominator is a multiple of 4, eof_get_effective_minimum_note_distance() will divide that denominator by 4 to treat it as a 1/# beat note gap to get results that match the logic for the built in grid snap values like 1/32
 int         eof_auto_show_waveform = 0;		//If nonzero, automatically enables the waveform graph whenever a project is loaded and recreates the waveform if it's enabled at the time an OGG file is loaded/changed
+int         eof_rocksmith_focus = 0;			//If nonzero, EOF will hide some non-Rocksmith related menu items
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
 int         eof_dont_auto_name_double_stops = 0;	//If nonzero, the chord detection logic will not name chords that have only two pitches (unique or otherwise)
 int         eof_section_auto_adjust = 1;		//If nonzero, section and FHP positions are updated when all their contained notes are simultaneously moved
@@ -348,7 +349,7 @@ unsigned long eof_main_loop_ctr = 0;
 double      eof_main_loop_fps = 0.0;
 unsigned    eof_note_type = EOF_NOTE_AMAZING;		//The active difficulty
 unsigned    eof_note_type_i = EOF_NOTE_AMAZING;		//The active difficulty for instrumental tracks
-unsigned    eof_note_type_v = EOF_NOTE_SUPAEASY;	//The active difficulty for the vocal track
+unsigned    eof_note_type_v = EOF_NOTE_SUPAEASY;		//The active difficulty for the vocal track
 unsigned    eof_selected_track = EOF_TRACK_GUITAR;
 int         eof_display_second_piano_roll = 0;		//If nonzero, a second piano roll will render in place of the info panel and 3D preview
 unsigned    eof_note_type2 = 256;	//The difficulty to display in the secondary piano roll (having a value greater than the highest supported difficulty level of 255 means it will initialize to the current difficulty when it is enabled)
@@ -1504,6 +1505,10 @@ void eof_fix_window_title(void)
 		if(eof_center_isolation)
 		{	//If center panned vocals are being amplified
 			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Center isolation)");
+		}
+		if(eof_rocksmith_focus)
+		{	//If Rocksmith focused interface is enabled
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Rocksmith focus)");
 		}
 	}
 	else
@@ -5767,6 +5772,13 @@ void eof_init_after_load(char initaftersavestate)
 	if((eof_selected_track == 0) || (eof_selected_track >= eof_song->tracks))
 	{	//Validate eof_selected_track, to ensure a valid track was loaded from the config file
 		eof_selected_track = EOF_TRACK_GUITAR;
+	}
+	if(eof_rocksmith_focus)
+	{	//If non Rocksmith related menu items are to be hidden
+		if(!eof_track_is_vocal_track(eof_song, eof_selected_track) && !eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		{	//If the last active track was neither the vocal track nor any pro guitar track
+			eof_selected_track = EOF_TRACK_PRO_GUITAR;	//Default to the first pro guitar track
+		}
 	}
 	(void) eof_menu_track_selected_track_number(eof_selected_track, 1);
 	if(eof_zoom <= 0)

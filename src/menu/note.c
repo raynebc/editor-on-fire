@@ -1865,6 +1865,13 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[17].flags = D_DISABLED | D_HIDDEN;
 		}
 
+		if(eof_rocksmith_focus)
+		{	//If non Rocksmith related menu items are to be hidden
+			eof_note_menu[6].flags = D_DISABLED | D_HIDDEN;	//Hide "Note>Solos>"
+			eof_note_menu[7].flags = D_DISABLED | D_HIDDEN;	//Hide "Note>Star power>"
+			eof_note_menu[12].flags = D_DISABLED | D_HIDDEN;	//Hide "Note>Trill>"
+		}
+
 		if(eof_create_filtered_menu(eof_note_menu, eof_filtered_note_menu, EOF_SCRATCH_MENU_SIZE))
 		{	//If the Note menu was recreated to filter out hidden items
 			eof_main_menu[4].child = eof_filtered_note_menu;	//Use this in the main menu

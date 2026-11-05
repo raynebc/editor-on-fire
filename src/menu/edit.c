@@ -14,6 +14,7 @@
 #include "note.h"	//For eof_update_implied_note_selection()
 #include "song.h"
 #include "track.h"	//For tech view functions
+#include "main.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -258,6 +259,8 @@ MENU eof_edit_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_filtered_edit_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_create_filtered_menu() to contain the contents of eof_edit_menu[] minus the hidden items
+
 DIALOG eof_custom_snap_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)         (dp2) (dp3) */
@@ -303,6 +306,15 @@ void eof_prepare_edit_menu(void)
 	if(eof_song && eof_song_loaded)
 	{	//If a chart is loaded
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+		if(eof_rocksmith_focus)
+		{	//If non Rocksmith related menu items are to be hidden
+			eof_edit_menu[13].flags = D_DISABLED | D_HIDDEN;	//Hide "Edit>Preview HOPO"
+		}
+		else
+		{
+			eof_edit_menu[13].flags = 0;
+		}
 
 		/* undo */
 		if(eof_undo_count > 0)
@@ -725,6 +737,15 @@ void eof_prepare_edit_menu(void)
 			eof_edit_paste_from_menu[1].text = "&Medium";
 			eof_edit_paste_from_menu[2].text = "&Hard";
 			eof_edit_paste_from_menu[3].text = "E&Xpert";
+		}
+
+		if(eof_create_filtered_menu(eof_edit_menu, eof_filtered_edit_menu, EOF_SCRATCH_MENU_SIZE))
+		{	//If the Edit menu was recreated to filter out hidden items
+			eof_main_menu[1].child = eof_filtered_edit_menu;	//Use this in the edit menu
+		}
+		else
+		{	//Otherwise use the unabridged File menu
+			eof_main_menu[1].child = eof_edit_menu;
 		}
 	}//If a chart is loaded
 }

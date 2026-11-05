@@ -42,6 +42,7 @@
 #include "song.h"
 #include "track.h"	//For tone name functions
 #include "help.h"	//For eof_reset_display()
+#include "main.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -176,6 +177,8 @@ MENU eof_file_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_filtered_file_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_create_filtered_menu() to contain the contents of eof_file_menu[] minus the hidden items
+
 DIALOG eof_settings_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
@@ -260,6 +263,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 399, 168, 16,  2,   23,  0,    0,      1,   0,   "Don't check for updates",NULL, NULL },
 	{ d_agup_check_proc, 248, 415, 234, 16,  2,   23,  0,    0,      1,   0,   "Convert measure note dist. to beat",NULL, NULL },
 	{ d_agup_check_proc, 248, 431, 210, 16,  2,   23,  0,    0,      1,   0,   "Auto enable/recreate waveform",NULL, NULL },
+	{ d_agup_check_proc, 248, 447, 125, 16,  2,   23,  0,    0,      1,   0,   "Rocksmith focus",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -459,6 +463,18 @@ DIALOG eof_lyric_detections_dialog[]=
 void eof_prepare_file_menu(void)
 {
 	unsigned long track_diff_note_count = 0;
+
+	if(eof_rocksmith_focus)
+	{	//If non Rocksmith related menu items are to be hidden
+		eof_file_menu[10].flags = D_DISABLED | D_HIDDEN;	//Hide "File>Default INI settings"
+		eof_file_menu[13].flags = D_DISABLED | D_HIDDEN;	//Hide File>Controllers
+	}
+	else
+	{
+		eof_file_menu[10].flags = 0;
+		eof_file_menu[13].flags = 0;
+	}
+
 	if(eof_song && eof_song_loaded)
 	{	//If a chart is loaded
 		#ifdef ALLEGRO_WINDOWS
@@ -574,6 +590,15 @@ void eof_prepare_file_menu(void)
 	else
 	{
 		(void) snprintf(eof_file_notes_panel_menu_string, sizeof(eof_file_notes_panel_menu_string) - 1, "&User defined");
+	}
+
+	if(eof_create_filtered_menu(eof_file_menu, eof_filtered_file_menu, EOF_SCRATCH_MENU_SIZE))
+	{	//If the File menu was recreated to filter out hidden items
+		eof_main_menu[0].child = eof_filtered_file_menu;	//Use this in the main menu
+	}
+	else
+	{	//Otherwise use the unabridged File menu
+		eof_main_menu[0].child = eof_file_menu;
 	}
 }
 
@@ -1674,6 +1699,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[56].flags = eof_dont_check_for_updates ? D_SELECTED : 0;			//Don't check for updates
 	eof_preferences_dialog[57].flags = eof_convert_measure_note_gap ? D_SELECTED : 0;		//Convert measure note dist. to beat
 	eof_preferences_dialog[58].flags = eof_auto_show_waveform ? D_SELECTED : 0;				//Auto enable/recreate waveform
+	eof_preferences_dialog[59].flags = eof_rocksmith_focus ? D_SELECTED : 0;					//Rocksmith focus
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1800,6 +1826,7 @@ int eof_menu_file_preferences(void)
 			eof_dont_check_for_updates = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 			eof_convert_measure_note_gap = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
 			eof_auto_show_waveform = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
+			eof_rocksmith_focus = (eof_preferences_dialog[59].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1862,6 +1889,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[56].flags = 0;					//Don't check for updates
 			eof_preferences_dialog[57].flags = D_SELECTED;			//Convert measure note dist. to beat
 			eof_preferences_dialog[58].flags = 0;					//Auto enable/recreate waveform
+			eof_preferences_dialog[59].flags = 0;					//Rocksmith focus
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -1890,6 +1918,7 @@ int eof_menu_file_preferences(void)
 	}
 	(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
 	eof_rebuild_notes_window();					//Recreate the notes panel window to fill all available space in the bottom half of the program window
+	eof_fix_window_title();
 
 	eof_log("Preferences logic exiting.", 2);
 	return 1;

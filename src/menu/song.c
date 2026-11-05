@@ -117,6 +117,17 @@ MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_rs_focus_track_selected_menu[EOF_TRACKS_MAX] =
+{
+	{eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[7], eof_menu_track_selected_8, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[8], eof_menu_track_selected_9, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[10], eof_menu_track_selected_11, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[13], eof_menu_track_selected_14, NULL, D_USER, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_catalog_menu[] =
 {
 	{"&Show\tQ", eof_menu_catalog_show, NULL, 0, NULL},
@@ -289,8 +300,27 @@ void eof_prepare_song_menu(void)
 	unsigned long totalnotecount = 0;
 
 	if(eof_song && eof_song_loaded)
-	{//If a chart is loaded
+	{	//If a chart is loaded
 		char bmcount = 0;
+
+		if(eof_rocksmith_focus)
+		{	//If non Rocksmith related menu items are to be hidden
+			eof_song_menu[10].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>INI Settings"
+			eof_song_menu[17].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>Manage raw MIDI tracks"
+			eof_song_menu[19].flags = D_DISABLED | D_HIDDEN;	//Hide line separator
+			eof_song_menu[20].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>Test song>"
+
+			eof_song_menu[1].child = eof_rs_focus_track_selected_menu;	//Replace Song>Track> with just the vocal and pro guitar tracks
+		}
+		else
+		{
+			eof_song_menu[10].flags = 0;
+			eof_song_menu[17].flags = 0;
+			eof_song_menu[19].flags = 0;
+			eof_song_menu[20].flags = 0;
+
+			eof_song_menu[1].child = eof_track_selected_menu;	//Restore the complete Song>Track> menu
+		}
 
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
@@ -347,6 +377,14 @@ void eof_prepare_song_menu(void)
 			}
 		}
 		eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;	//Track numbering begins at 1 instead of 0
+
+		//For the Rocksmith focus Song>Track> menu, replicate the checked/unchecked status for each track entry
+		eof_rs_focus_track_selected_menu[0].flags = eof_track_selected_menu[5].flags;	//PART VOCALS
+		eof_rs_focus_track_selected_menu[1].flags = eof_track_selected_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_track_selected_menu[2].flags = eof_track_selected_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_track_selected_menu[3].flags = eof_track_selected_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_track_selected_menu[4].flags = eof_track_selected_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_track_selected_menu[5].flags = eof_track_selected_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
 		/* seek start */
 		if(eof_music_pos.value == eof_av_delay)

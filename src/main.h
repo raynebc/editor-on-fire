@@ -451,6 +451,7 @@ extern int         eof_dont_check_for_updates;
 extern int         eof_last_new_event_track_specific_status;
 extern int         eof_convert_measure_note_gap;
 extern int         eof_auto_show_waveform;
+extern int         eof_rocksmith_focus;
 extern int         eof_auto_complete_fingering;
 extern int         eof_dont_auto_name_double_stops;
 extern int         eof_section_auto_adjust;

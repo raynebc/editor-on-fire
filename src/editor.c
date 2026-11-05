@@ -1490,8 +1490,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			{	//Track numbering begins at 1 instead of 0
 				unsigned long original_track = eof_selected_track;
 
-				if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
-				{
+				if(KEY_EITHER_SHIFT)
+				{	//Shift track back 1 number
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 
 					do{
@@ -1500,17 +1500,32 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						else
 							(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1, 1);	//Wrap around
 
+						if(eof_rocksmith_focus)
+						{	//If non Rocksmith related tracks are to be hidden
+							if(!eof_track_is_vocal_track(eof_song, eof_selected_track) && !eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+							{	//If the would-be active track is neither the vocal track nor any pro guitar track
+								continue;	//Iterate to the next track
+							}
+						}
 						if(!eof_ctrl_tab_skip_empty_tracks || eof_get_track_size_all(eof_song, eof_selected_track))
 							break;	//If the user preference is for CTRL+SHIFT+TAB to skip changing to empty tracks, and this track is not empty, break from loop
 					}while(original_track != eof_selected_track);	//Repeat up until the same track is reached again
 				}
-				else					//Shift instrument forward 1 number
-				{
+				else
+				{	//Shift track forward 1 number
 					do{
 						if(eof_selected_track < EOF_TRACKS_MAX - 1)
 							(void) eof_menu_track_selected_track_number(eof_selected_track + 1, 1);
 						else
 							(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN, 1);	//Wrap around
+
+						if(eof_rocksmith_focus)
+						{	//If non Rocksmith related tracks are to be hidden
+							if(!eof_track_is_vocal_track(eof_song, eof_selected_track) && !eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+							{	//If the would-be active track is neither the vocal track nor any pro guitar track
+								continue;	//Iterate to the next track
+							}
+						}
 
 						if(!eof_ctrl_tab_skip_empty_tracks || eof_get_track_size_all(eof_song, eof_selected_track))
 							break;	//If the user preference is for CTRL+TAB to skip changing to empty tracks, and this track is not empty, break from loop
