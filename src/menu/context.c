@@ -77,6 +77,8 @@ void eof_prepare_context_menu(void)
 		{	//If at least one note is selected, enable the Copy function
 			eof_right_click_menu_normal[0].flags = 0;	//Copy
 			eof_right_click_menu_note[2].flags = 0;		//Copy
+
+			eof_prepare_note_menu();	//Also hide/show menu functions as appropriate
 		}
 		else
 		{
