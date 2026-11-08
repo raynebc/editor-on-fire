@@ -35,9 +35,6 @@
 #include "../memwatch.h"
 #endif
 
-char eof_track_selected_menu_text[EOF_TRACKS_MAX][EOF_NAME_LENGTH+EOF_NAME_LENGTH+5] = {{0}};
-	//Allow enough characters to display the native track name, user-defined alternate name, parentheses, a space, an extra leading space for the populated indicator and a NULL
-
 char eof_raw_midi_track_error[] = "(error)";
 struct eof_MIDI_data_track *eof_parsed_MIDI;
 char eof_raw_midi_track_undo_made;
@@ -100,31 +97,31 @@ MENU eof_song_seek_menu[] =
 
 MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
 {
-	{eof_track_selected_menu_text[0], eof_menu_track_selected_1, NULL, D_SELECTED | D_USER, NULL},
-	{eof_track_selected_menu_text[1], eof_menu_track_selected_2, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[2], eof_menu_track_selected_3, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[3], eof_menu_track_selected_4, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[6], eof_menu_track_selected_7, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[7], eof_menu_track_selected_8, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[8], eof_menu_track_selected_9, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[9], eof_menu_track_selected_10, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[10], eof_menu_track_selected_11, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[12], eof_menu_track_selected_13, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[13], eof_menu_track_selected_14, NULL, D_USER, NULL},
+	{eof_menu_track_names[0], eof_menu_track_selected_1, NULL, D_SELECTED | D_USER, NULL},
+	{eof_menu_track_names[1], eof_menu_track_selected_2, NULL, D_USER, NULL},
+	{eof_menu_track_names[2], eof_menu_track_selected_3, NULL, D_USER, NULL},
+	{eof_menu_track_names[3], eof_menu_track_selected_4, NULL, D_USER, NULL},
+	{eof_menu_track_names[4], eof_menu_track_selected_5, NULL, D_USER, NULL},
+	{eof_menu_track_names[5], eof_menu_track_selected_6, NULL, D_USER, NULL},
+	{eof_menu_track_names[6], eof_menu_track_selected_7, NULL, D_USER, NULL},
+	{eof_menu_track_names[7], eof_menu_track_selected_8, NULL, D_USER, NULL},
+	{eof_menu_track_names[8], eof_menu_track_selected_9, NULL, D_USER, NULL},
+	{eof_menu_track_names[9], eof_menu_track_selected_10, NULL, D_USER, NULL},
+	{eof_menu_track_names[10], eof_menu_track_selected_11, NULL, D_USER, NULL},
+	{eof_menu_track_names[11], eof_menu_track_selected_12, NULL, D_USER, NULL},
+	{eof_menu_track_names[12], eof_menu_track_selected_13, NULL, D_USER, NULL},
+	{eof_menu_track_names[13], eof_menu_track_selected_14, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_rs_focus_track_selected_menu[EOF_TRACKS_MAX] =
 {
-	{eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[7], eof_menu_track_selected_8, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[8], eof_menu_track_selected_9, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[10], eof_menu_track_selected_11, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, D_USER, NULL},
-	{eof_track_selected_menu_text[13], eof_menu_track_selected_14, NULL, D_USER, NULL},
+	{eof_menu_track_names[5], eof_menu_track_selected_6, NULL, D_USER, NULL},
+	{eof_menu_track_names[7], eof_menu_track_selected_8, NULL, D_USER, NULL},
+	{eof_menu_track_names[8], eof_menu_track_selected_9, NULL, D_USER, NULL},
+	{eof_menu_track_names[10], eof_menu_track_selected_11, NULL, D_USER, NULL},
+	{eof_menu_track_names[11], eof_menu_track_selected_12, NULL, D_USER, NULL},
+	{eof_menu_track_names[13], eof_menu_track_selected_14, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -358,25 +355,9 @@ void eof_prepare_song_menu(void)
 		/* track */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{
-			char *ptr = eof_track_selected_menu_text[i];	//Do this to work around false alarm warnings
-			eof_track_selected_menu[i].flags = 0;
-			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-			{	//If the track exists, copy its name into the string used by the track menu
-				if((eof_song->track[i+1]->flags & EOF_TRACK_FLAG_ALT_NAME) && eof_check_string(eof_song->track[i+1]->altname))
-				{	//If the user defined an alternate name for the track, display that and the native name in parentheses
-					(void) uszprintf(ptr, sizeof(eof_track_selected_menu_text[0]), " %s (%s)", eof_song->track[i+1]->altname, eof_song->track[i+1]->name);
-				}
-				else
-				{	//Otherwise just display the native name
-					(void) uszprintf(ptr, sizeof(eof_track_selected_menu_text[0]), " %s", eof_song->track[i+1]->name);
-				}
-			}
-			else
-			{	//Write a blank string for the track name
-				(void) ustrzcpy(eof_track_selected_menu_text[i], sizeof(eof_track_selected_menu_text[0]), "");
-			}
+			eof_track_selected_menu[i].flags = 0;	//Clear the check status for the tracks
 		}
-		eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;	//Track numbering begins at 1 instead of 0
+		eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;	//Check the currently active track (EOF's track numbering begins at 1 instead of 0)
 
 		//For the Rocksmith focus Song>Track> menu, replicate the checked/unchecked status for each track entry
 		eof_rs_focus_track_selected_menu[0].flags = eof_track_selected_menu[5].flags;	//PART VOCALS

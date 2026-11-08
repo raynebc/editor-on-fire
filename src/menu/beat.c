@@ -351,10 +351,12 @@ void eof_prepare_beat_menu(void)
 	{	//If a song is loaded
 		if(eof_rocksmith_focus)
 		{	//If non Rocksmith related menu items are to be hidden
-			eof_beat_menu[19].flags = D_DISABLED | D_HIDDEN;	//Hide "Beat>Place section"
+			eof_beat_events_menu[5].child = eof_rs_focus_menu_beat_events_copy_menu;		//Replace  Beat>Events>Copy from with just the pro guitar tracks
+			eof_beat_menu[19].flags = D_DISABLED | D_HIDDEN;							//Hide "Beat>Place section"
 		}
 		else
 		{
+			eof_beat_events_menu[5].child = eof_menu_beat_events_copy_menu;				//Restore the complete Beat>Events>Copy from menu
 			eof_beat_menu[19].flags = 0;
 		}
 
@@ -695,6 +697,12 @@ void eof_prepare_beat_menu(void)
 				eof_menu_beat_events_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
+		//For the Rocksmith focus Beat>Events>Copy from menu, replicate the enabled/disabled status for each track entry
+		eof_rs_focus_menu_beat_events_copy_menu[0].flags = eof_menu_beat_events_copy_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_menu_beat_events_copy_menu[1].flags = eof_menu_beat_events_copy_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_menu_beat_events_copy_menu[2].flags = eof_menu_beat_events_copy_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_menu_beat_events_copy_menu[3].flags = eof_menu_beat_events_copy_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_menu_beat_events_copy_menu[4].flags = eof_menu_beat_events_copy_menu[13].flags;	//PART REAL_GUITAR_BONUS
 	}//If a song is loaded
 }
 
@@ -4347,6 +4355,16 @@ MENU eof_menu_beat_events_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_track_names[10], eof_menu_beat_copy_events_track_11, NULL, 0, NULL},
 	{eof_menu_track_names[11], eof_menu_beat_copy_events_track_12, NULL, 0, NULL},
 	{eof_menu_track_names[12], eof_menu_beat_copy_events_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_beat_copy_events_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_rs_focus_menu_beat_events_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_beat_copy_events_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_beat_copy_events_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_beat_copy_events_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_beat_copy_events_track_12, NULL, 0, NULL},
 	{eof_menu_track_names[13], eof_menu_beat_copy_events_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };

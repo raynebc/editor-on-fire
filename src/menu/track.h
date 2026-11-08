@@ -9,6 +9,9 @@ extern MENU eof_filtered_track_menu[EOF_SCRATCH_MENU_SIZE];
 extern MENU eof_track_rocksmith_menu[];
 extern MENU eof_track_proguitar_menu[];
 extern MENU eof_track_rocksmith_arrangement_menu[];
+extern MENU eof_track_rocksmith_popup_menu[];
+extern MENU eof_track_rocksmith_tone_change_menu[];
+extern MENU eof_track_rocksmith_fret_hand_menu[];
 
 extern DIALOG eof_pro_guitar_tuning_dialog[];
 extern DIALOG eof_note_set_num_frets_strings_dialog[];
@@ -224,6 +227,7 @@ int eof_track_erase_track_difficulty(void);	//Allows the user to erase the activ
 int eof_menu_track_remove_highlighting(void);	//Removes highlighting from the notes in the active track
 
 extern MENU eof_menu_track_rocksmith_tone_change_copy_menu[EOF_TRACKS_MAX];
+extern MENU eof_rs_focus_menu_track_rocksmith_tone_change_copy_menu[EOF_TRACKS_MAX];
 int eof_menu_track_copy_tone_changes_track_8(void);
 int eof_menu_track_copy_tone_changes_track_9(void);
 int eof_menu_track_copy_tone_changes_track_11(void);
@@ -233,6 +237,7 @@ int eof_menu_track_copy_tone_changes_track_number(EOF_SONG *sp, unsigned long so
 	//Copies the tone changes from the specified source track to the destination track
 
 extern MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX];
+extern MENU eof_rs_focus_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX];
 int eof_menu_track_copy_popups_track_8(void);
 int eof_menu_track_copy_popups_track_9(void);
 int eof_menu_track_copy_popups_track_11(void);
@@ -242,6 +247,7 @@ int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, unsigned long sourcetr
 	//Copies the popup messages from the specified source track to the destination track
 
 extern MENU eof_track_proguitar_fret_hand_copy_menu[EOF_TRACKS_MAX];
+extern MENU eof_rs_focus_track_proguitar_fret_hand_copy_menu[EOF_TRACKS_MAX];
 int eof_menu_track_copy_fret_hand_track_8(void);
 int eof_menu_track_copy_fret_hand_track_9(void);
 int eof_menu_track_copy_fret_hand_track_11(void);

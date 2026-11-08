@@ -34,7 +34,6 @@ MENU eof_track_phaseshift_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-
 MENU eof_menu_thin_diff_menu[EOF_TRACKS_MAX] =
 {
 	{eof_menu_track_names[0], eof_menu_thin_notes_track_1, NULL, D_SELECTED, NULL},
@@ -54,6 +53,16 @@ MENU eof_menu_thin_diff_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_rs_focus_menu_thin_diff_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_thin_notes_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_thin_notes_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_thin_notes_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_menu_track_clone_from_menu[EOF_TRACKS_MAX] =
 {
 	{eof_menu_track_names[0], eof_menu_track_clone_track_1, NULL, D_SELECTED, NULL},
@@ -69,6 +78,16 @@ MENU eof_menu_track_clone_from_menu[EOF_TRACKS_MAX] =
 	{eof_menu_track_names[10], eof_menu_track_clone_track_11, NULL, 0, NULL},
 	{eof_menu_track_names[11], eof_menu_track_clone_track_12, NULL, 0, NULL},
 	{eof_menu_track_names[12], eof_menu_track_clone_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_track_clone_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_rs_focus_menu_track_clone_from_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_track_clone_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_track_clone_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_track_clone_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_track_clone_track_12, NULL, 0, NULL},
 	{eof_menu_track_names[13], eof_menu_track_clone_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -195,7 +214,7 @@ void eof_prepare_track_menu(void)
 	unsigned diff1, diff2 = 0xFF, multidiff = 0;
 
 	if(eof_song && eof_song_loaded)
-	{//If a chart is loaded
+	{	//If a chart is loaded
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 		eof_track_menu[6].flags = 0;			//Track>Set difficulty> submenu
@@ -211,6 +230,20 @@ void eof_prepare_track_menu(void)
 			{	//If non Rocksmith related menu items are to be hidden
 				eof_track_menu[2].flags = D_DISABLED | D_HIDDEN;	//Hide "Track>IMMERROCK>"
 				eof_track_menu[6].flags = D_DISABLED | D_HIDDEN;	//Hide "Track>Set difficulty>"
+
+				eof_track_rocksmith_popup_menu[2].child = eof_rs_focus_menu_track_rocksmith_popup_copy_menu;			//Replace Track>Rocksmith>Popup messages>Copy from with just the pro guitar tracks
+				eof_track_rocksmith_tone_change_menu[3].child = eof_rs_focus_menu_track_rocksmith_tone_change_copy_menu;	//Replace  Track>Rocksmith>Tone change>Copy from with just the pro guitar tracks
+				eof_track_rocksmith_fret_hand_menu[5].child = eof_rs_focus_track_proguitar_fret_hand_copy_menu;				//Replace  Track>Rocksmith>Fret hand positions>Copy from with just the pro guitar tracks
+				eof_track_menu[10].child = eof_rs_focus_menu_thin_diff_menu;											//Replace  Track>Thin diff to match with just the pro guitar tracks
+				eof_track_clone_menu[0].child = eof_rs_focus_menu_track_clone_from_menu;								//Replace  Track>Clone>From track with just the pro guitar tracks
+			}
+			else
+			{
+				eof_track_rocksmith_popup_menu[2].child = eof_menu_track_rocksmith_popup_copy_menu;				//Restore the complete Track>Rocksmith>Popup messages>Copy from menu
+				eof_track_rocksmith_tone_change_menu[3].child = eof_menu_track_rocksmith_tone_change_copy_menu;		//Restore the complete Track>Rocksmith>Tone change>Copy from menu
+				eof_track_rocksmith_fret_hand_menu[5].child = eof_track_proguitar_fret_hand_copy_menu;				//Restore the complete Track>Rocksmith>Fret hand positions>Copy from menu
+				eof_track_menu[10].child = eof_menu_thin_diff_menu;												//Restore the complete Track>Thin diff to match with menu
+				eof_track_clone_menu[0].child = eof_menu_track_clone_from_menu;									//Restore the complete Track>Clone>From track menu
 			}
 			if(eof_song->pro_guitar_track[tracknum]->ignore_tuning)
 			{
@@ -408,8 +441,14 @@ void eof_prepare_track_menu(void)
 				eof_menu_track_rocksmith_popup_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
+		//For the Rocksmith focus Track>Rocksmith>Popup message>Copy from menu, replicate the enabled/disabled status for each track entry
+		eof_rs_focus_menu_track_rocksmith_popup_copy_menu[0].flags = eof_menu_track_rocksmith_popup_copy_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_menu_track_rocksmith_popup_copy_menu[1].flags = eof_menu_track_rocksmith_popup_copy_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_menu_track_rocksmith_popup_copy_menu[2].flags = eof_menu_track_rocksmith_popup_copy_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_menu_track_rocksmith_popup_copy_menu[3].flags = eof_menu_track_rocksmith_popup_copy_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_menu_track_rocksmith_popup_copy_menu[4].flags = eof_menu_track_rocksmith_popup_copy_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
-		/* tone changes copy from */
+		/* tone change copy from */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_track_rocksmith_tone_change_copy_menu[i].flags = 0;
@@ -419,6 +458,12 @@ void eof_prepare_track_menu(void)
 				eof_menu_track_rocksmith_tone_change_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
+		//For the Rocksmith focus Track>Rocksmith>Tone change>Copy from menu, replicate the enabled/disabled status for each track entry
+		eof_rs_focus_menu_track_rocksmith_tone_change_copy_menu[0].flags = eof_menu_track_rocksmith_tone_change_copy_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_menu_track_rocksmith_tone_change_copy_menu[1].flags = eof_menu_track_rocksmith_tone_change_copy_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_menu_track_rocksmith_tone_change_copy_menu[2].flags = eof_menu_track_rocksmith_tone_change_copy_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_menu_track_rocksmith_tone_change_copy_menu[3].flags = eof_menu_track_rocksmith_tone_change_copy_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_menu_track_rocksmith_tone_change_copy_menu[4].flags = eof_menu_track_rocksmith_tone_change_copy_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
 		/* fret hand positions copy from */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -430,6 +475,12 @@ void eof_prepare_track_menu(void)
 				eof_track_proguitar_fret_hand_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
+		//For the Rocksmith focus Track>Rocksmith>Fret hand positions>Copy from menu, replicate the enabled/disabled status for each track entry
+		eof_rs_focus_track_proguitar_fret_hand_copy_menu[0].flags = eof_track_proguitar_fret_hand_copy_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_track_proguitar_fret_hand_copy_menu[1].flags = eof_track_proguitar_fret_hand_copy_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_track_proguitar_fret_hand_copy_menu[2].flags = eof_track_proguitar_fret_hand_copy_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_track_proguitar_fret_hand_copy_menu[3].flags = eof_track_proguitar_fret_hand_copy_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_track_proguitar_fret_hand_copy_menu[4].flags = eof_track_proguitar_fret_hand_copy_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
 		/* Thin difficulty to match */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -448,6 +499,12 @@ void eof_prepare_track_menu(void)
 				}
 			}
 		}
+		//For the Rocksmith focus Track>Thin diff to match menu, replicate the enabled/disabled status for each track entry
+		eof_rs_focus_menu_thin_diff_menu[0].flags = eof_menu_thin_diff_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_menu_thin_diff_menu[1].flags = eof_menu_thin_diff_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_menu_thin_diff_menu[2].flags = eof_menu_thin_diff_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_menu_thin_diff_menu[3].flags = eof_menu_thin_diff_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_menu_thin_diff_menu[4].flags = eof_menu_thin_diff_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
 		/* Clone from track */
 		for(i = 0; i < EOF_TRACKS_MAX - 1; i++)
@@ -465,6 +522,12 @@ void eof_prepare_track_menu(void)
 
 			eof_menu_track_clone_from_menu[i].flags = 0;	//Enable the track from the submenu
 		}
+		//For the Rocksmith focus Track>Thin diff to match menu, replicate the enabled/disabled status for each track entry
+		eof_rs_focus_menu_track_clone_from_menu[0].flags = eof_menu_track_clone_from_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_menu_track_clone_from_menu[1].flags = eof_menu_track_clone_from_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_menu_track_clone_from_menu[2].flags = eof_menu_track_clone_from_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_menu_track_clone_from_menu[3].flags = eof_menu_track_clone_from_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_menu_track_clone_from_menu[4].flags = eof_menu_track_clone_from_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
 		/* Clone from clipboard */
 		(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clone.clipboard", eof_temp_path_s);
@@ -1745,6 +1808,27 @@ MENU eof_track_proguitar_fret_hand_copy_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_rs_focus_track_proguitar_fret_hand_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_track_copy_fret_hand_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_track_copy_fret_hand_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_track_copy_fret_hand_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_track_copy_fret_hand_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_track_copy_fret_hand_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_track_rocksmith_fret_hand_menu[] =
+{
+	{"&Set\tShift+F", eof_track_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
+	{"&List\t" CTRL_NAME "+Shift+F", eof_track_fret_hand_positions, NULL, 0, NULL},
+	{"&Copy", eof_track_fret_hand_positions_copy_from, NULL, 0, NULL},
+	{"Generate all diffs", eof_track_fret_hand_positions_generate_all, NULL, 0, NULL},
+	{"Delete effective\tShift+Del", eof_track_delete_effective_fret_hand_position, NULL, 0, NULL},
+	{"Copy &From", NULL, eof_track_proguitar_fret_hand_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 char eof_track_pro_guitar_set_fret_hand_position_dialog_string1[] = "Set fret hand position";
 char eof_track_pro_guitar_set_fret_hand_position_dialog_string2[] = "Edit fret hand position";
 unsigned long eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp;
@@ -2909,6 +2993,16 @@ MENU eof_menu_track_rocksmith_tone_change_copy_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_rs_focus_menu_track_rocksmith_tone_change_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_track_copy_tone_changes_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_track_copy_tone_changes_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_track_copy_tone_changes_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_track_copy_tone_changes_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_track_copy_tone_changes_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_rocksmith_tone_change_menu[] =
 {
 	{"&Add\t" CTRL_NAME "+Shift+T", eof_track_rs_tone_change_add, NULL, 0, NULL},
@@ -2937,22 +3031,21 @@ MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_rs_focus_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_track_copy_popups_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_track_copy_popups_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_track_copy_popups_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_track_copy_popups_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_track_copy_popups_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_rocksmith_popup_menu[] =
 {
 	{"&Add", eof_track_rs_popup_add, NULL, 0, NULL},
 	{"&List", eof_track_rs_popup_messages, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_track_rocksmith_popup_copy_menu, 0, NULL},
-	{NULL, NULL, NULL, 0, NULL}
-};
-
-MENU eof_track_rocksmith_fret_hand_menu[] =
-{
-	{"&Set\tShift+F", eof_track_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
-	{"&List\t" CTRL_NAME "+Shift+F", eof_track_fret_hand_positions, NULL, 0, NULL},
-	{"&Copy", eof_track_fret_hand_positions_copy_from, NULL, 0, NULL},
-	{"Generate all diffs", eof_track_fret_hand_positions_generate_all, NULL, 0, NULL},
-	{"Delete effective\tShift+Del", eof_track_delete_effective_fret_hand_position, NULL, 0, NULL},
-	{"Copy &From", NULL, eof_track_proguitar_fret_hand_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

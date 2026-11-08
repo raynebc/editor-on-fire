@@ -27,6 +27,7 @@
 #include "undo.h"
 #include "mix.h"
 #include "tuning.h"
+#include "utility.h"
 #include "dialog/main.h"
 #include "menu/file.h"
 #include "menu/edit.h"
@@ -68,8 +69,9 @@ static int eof_keyboard_shortcut = 0;
 static int eof_main_menu_activated = 0;
 int eof_close_menu = 0;	//A variable that can be set to nonzero to try to force the dialog logic closed, as some menu functions seem to get stuck and stop processing input until an Escape keypress or mouse click
 
-char eof_menu_track_names[EOF_TRACKS_MAX][EOF_NAME_LENGTH + 1] = {{0}};
+char eof_menu_track_names[EOF_TRACKS_MAX][EOF_NAME_LENGTH+EOF_NAME_LENGTH+5] = {{0}};
 	//A list of the names of each track, built by eof_prepare_menus()
+	//Allow enough characters to display the native track name, user-defined alternate name, parentheses, a space, an extra leading space for the populated indicator and a NULL
 
 //Logic for tracking click and drag for the dialog window title bar
 int mouse_down = 0;
@@ -174,26 +176,9 @@ void eof_conditionally_center_dialog(DIALOG *dp)
 
 void eof_prepare_menus(void)
 {
-	unsigned long i;
-
 	eof_log("eof_prepare_menus() entered", 3);
 
-	if(eof_song && eof_song_loaded)
-	{	//If a chart is loaded
-		for(i = 0; i < EOF_TRACKS_MAX - 1; i++)
-		{	//For each track supported by EOF
-			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
-			{	//If the track exists, copy its name into the track name string representing this track
-				(void) ustrzcpy(eof_menu_track_names[i], sizeof(eof_menu_track_names[0]), eof_song->track[i + 1]->name);
-					//Copy the track name to the menu string
-			}
-			else
-			{	//Write a blank string for the track name
-				(void) ustrzcpy(eof_menu_track_names[i], sizeof(eof_menu_track_names[0]), "");
-			}
-		}
-	}
-
+	eof_rebuild_menu_track_names();
 	eof_prepare_main_menu();
 	eof_prepare_file_menu();
 	eof_prepare_edit_menu();
@@ -469,3 +454,31 @@ int eof_create_filtered_menu(MENU *input_menu, MENU *output_menu, unsigned menu_
 	return 1;	//Success
 }
 
+void eof_rebuild_menu_track_names(void)
+{
+	unsigned i;
+
+	if(eof_song && eof_song_loaded)
+	{	//If a chart is loaded
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{
+			char *ptr = eof_menu_track_names[i];	//Do this to work around false alarm warnings
+
+			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+			{	//If the track exists, copy its name into the string used by the track menu
+				if((eof_song->track[i+1]->flags & EOF_TRACK_FLAG_ALT_NAME) && eof_check_string(eof_song->track[i+1]->altname))
+				{	//If the user defined an alternate name for the track, display that and the native name in parentheses
+					(void) uszprintf(ptr, sizeof(eof_menu_track_names[0]), " %s (%s)", eof_song->track[i+1]->altname, eof_song->track[i+1]->name);
+				}
+				else
+				{	//Otherwise just display the native name
+					(void) uszprintf(ptr, sizeof(eof_menu_track_names[0]), " %s", eof_song->track[i+1]->name);
+				}
+			}
+			else
+			{	//Write a blank string for the track name
+				(void) ustrzcpy(eof_menu_track_names[i], sizeof(eof_menu_track_names[0]), "");
+			}
+		}
+	}
+}

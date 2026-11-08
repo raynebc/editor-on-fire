@@ -139,6 +139,16 @@ MENU eof_menu_arpeggio_copy_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_rs_focus_menu_arpeggio_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_copy_arpeggio_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_arpeggio_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_arpeggio_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_arpeggio_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_arpeggio_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_arpeggio_menu[] =
 {
 	{eof_arpeggio_menu_mark_text, eof_menu_arpeggio_mark, NULL, 0, NULL},
@@ -164,6 +174,16 @@ MENU eof_menu_handshape_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_track_names[10], eof_menu_copy_handshape_track_11, NULL, 0, NULL},
 	{eof_menu_track_names[11], eof_menu_copy_handshape_track_12, NULL, 0, NULL},
 	{eof_menu_track_names[12], eof_menu_copy_handshape_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_handshape_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_rs_focus_menu_handshape_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_copy_handshape_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_handshape_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_handshape_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_handshape_track_12, NULL, 0, NULL},
 	{eof_menu_track_names[13], eof_menu_copy_handshape_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -243,6 +263,16 @@ MENU eof_menu_tremolo_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_track_names[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
 	{eof_menu_track_names[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
 	{eof_menu_track_names[12], eof_menu_copy_tremolo_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_tremolo_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_rs_focus_menu_tremolo_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[7], eof_menu_copy_tremolo_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_tremolo_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
 	{eof_menu_track_names[13], eof_menu_copy_tremolo_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -1327,6 +1357,12 @@ void eof_prepare_note_menu(void)
 				eof_menu_arpeggio_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
+		//For the Rocksmith focus Note>Tremolo>Copy from menu, replicate the enabled/disabled status for each track entry
+		eof_rs_focus_menu_arpeggio_copy_menu[0].flags = eof_menu_arpeggio_copy_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_menu_arpeggio_copy_menu[1].flags = eof_menu_arpeggio_copy_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_menu_arpeggio_copy_menu[2].flags = eof_menu_arpeggio_copy_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_menu_arpeggio_copy_menu[3].flags = eof_menu_arpeggio_copy_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_menu_arpeggio_copy_menu[4].flags = eof_menu_arpeggio_copy_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
 		/* handshape copy from */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -1338,6 +1374,12 @@ void eof_prepare_note_menu(void)
 				eof_menu_handshape_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
+		//For the Rocksmith focus Note>Rocksmith>Handshape>Copy from menu, replicate the enabled/disabled status for each track entry
+		eof_rs_focus_menu_handshape_copy_menu[0].flags = eof_menu_handshape_copy_menu[7].flags;	//PART REAL_BASS
+		eof_rs_focus_menu_handshape_copy_menu[1].flags = eof_menu_handshape_copy_menu[8].flags;	//PART REAL_GUITAR
+		eof_rs_focus_menu_handshape_copy_menu[2].flags = eof_menu_handshape_copy_menu[10].flags;	//PART REAL_BASS_22
+		eof_rs_focus_menu_handshape_copy_menu[3].flags = eof_menu_handshape_copy_menu[11].flags;	//PART REAL_GUITAR_22
+		eof_rs_focus_menu_handshape_copy_menu[4].flags = eof_menu_handshape_copy_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
 		/* star power erase all */
 		if(eof_get_num_star_power_paths(eof_song, eof_selected_track) > 0)
@@ -1725,6 +1767,12 @@ void eof_prepare_note_menu(void)
 			{	//If either drum track is active and their phrases are shared
 				eof_menu_tremolo_copy_menu[4].flags = eof_menu_tremolo_copy_menu[12].flags = D_DISABLED;	//Don't allow copying tremolos from one to the other
 			}
+			//For the Rocksmith focus Note>Tremolo>Copy from menu, replicate the enabled/disabled status for each track entry
+			eof_rs_focus_menu_tremolo_copy_menu[0].flags = eof_menu_tremolo_copy_menu[7].flags;	//PART REAL_BASS
+			eof_rs_focus_menu_tremolo_copy_menu[1].flags = eof_menu_tremolo_copy_menu[8].flags;	//PART REAL_GUITAR
+			eof_rs_focus_menu_tremolo_copy_menu[2].flags = eof_menu_tremolo_copy_menu[10].flags;	//PART REAL_BASS_22
+			eof_rs_focus_menu_tremolo_copy_menu[3].flags = eof_menu_tremolo_copy_menu[11].flags;	//PART REAL_GUITAR_22
+			eof_rs_focus_menu_tremolo_copy_menu[4].flags = eof_menu_tremolo_copy_menu[13].flags;	//PART REAL_GUITAR_BONUS
 
 			/* Rename Trill and Tremolo menus as necessary for the drum track */
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
@@ -1870,6 +1918,16 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[6].flags = D_DISABLED | D_HIDDEN;	//Hide "Note>Solos>"
 			eof_note_menu[7].flags = D_DISABLED | D_HIDDEN;	//Hide "Note>Star power>"
 			eof_note_menu[12].flags = D_DISABLED | D_HIDDEN;	//Hide "Note>Trill>"
+
+			eof_tremolo_menu[4].child = eof_rs_focus_menu_tremolo_copy_menu;		//Replace  Note>Tremolo>Copy from with just the pro guitar tracks
+			eof_arpeggio_menu[4].child = eof_rs_focus_menu_arpeggio_copy_menu;		//Replace  Note>Pro guitar>Arpeggio>Copy from with just the pro guitar tracks
+			eof_handshape_menu[4].child = eof_rs_focus_menu_handshape_copy_menu;	//Replace  Note>Rocksmith>Handshape>Copy from with just the pro guitar tracks
+		}
+		else
+		{
+			eof_tremolo_menu[4].child = eof_rs_focus_menu_tremolo_copy_menu;		//Restore the complete Note>Tremolo>Copy from menu
+			eof_arpeggio_menu[4].child = eof_menu_arpeggio_copy_menu;				//Restore the complete Note>Pro guitar>Arpeggio>Copy from menu
+			eof_handshape_menu[4].child = eof_menu_handshape_copy_menu;			//Restore the complete Note>Rocksmith>Handshape>Copy from menu
 		}
 
 		if(eof_create_filtered_menu(eof_note_menu, eof_filtered_note_menu, EOF_SCRATCH_MENU_SIZE))

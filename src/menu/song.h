@@ -7,6 +7,7 @@
 #define EOF_INI_ADD_DIALOG_STRING_LENGTH 30
 
 extern MENU eof_track_selected_menu[];
+extern MENU eof_rs_focus_track_selected_menu[];
 extern MENU eof_catalog_menu[];
 extern MENU eof_song_piano_roll_menu[];
 extern MENU eof_song_seek_menu[];

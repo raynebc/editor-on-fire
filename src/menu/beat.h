@@ -209,6 +209,7 @@ int eof_menu_beat_summarize_tempo_changes_at_measures(void);
 	//Does not affect beats that are not within the scope of a time signature
 
 extern MENU eof_menu_beat_events_copy_menu[EOF_TRACKS_MAX];
+extern MENU eof_rs_focus_menu_beat_events_copy_menu[EOF_TRACKS_MAX];
 int eof_menu_beat_copy_events_track_1(void);
 int eof_menu_beat_copy_events_track_2(void);
 int eof_menu_beat_copy_events_track_3(void);

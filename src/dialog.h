@@ -25,7 +25,7 @@ extern char eof_etext9[1024];
 extern char eof_etext10[1024];
 extern char *eof_help_text;
 extern char eof_ctext[8][1024];
-extern char eof_menu_track_names[EOF_TRACKS_MAX][EOF_NAME_LENGTH + 1];
+extern char eof_menu_track_names[EOF_TRACKS_MAX][EOF_NAME_LENGTH+EOF_NAME_LENGTH+5];
 
 extern int eof_close_menu;	//Set to nonzero to signal to eof_popup_dialog() that the menus should be closed
 						//ALT key shortcuts must be checked for in this function and allowed to close the main menu system for other functions to detect them
@@ -55,5 +55,8 @@ int eof_create_filtered_menu(MENU *input_menu, MENU *output_menu, unsigned menu_
 	//A function that copies all non-hidden items (containing the D_HIDDEN flag) from the input menu into the output menu
 	//menu_size defines the number of elements the output menu is capable of storing
 	//returns zero on error
+
+void eof_rebuild_menu_track_names(void);
+	//Rebuild eof_menu_track_names[] to include any alternate name defined for each track
 
 #endif
