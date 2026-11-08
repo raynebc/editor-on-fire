@@ -198,16 +198,7 @@ void eof_prepare_track_menu(void)
 	{//If a chart is loaded
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 
-		if(eof_rocksmith_focus)
-		{	//If non Rocksmith related menu items are to be hidden
-			eof_track_menu[2].flags = D_DISABLED | D_HIDDEN;	//Hide "Track>IMMERROCK>"
-			eof_track_menu[6].flags = D_DISABLED | D_HIDDEN;	//Hide "Track>Set difficulty>"
-		}
-		else
-		{
-			eof_track_menu[2].flags = 0;
-			eof_track_menu[6].flags = 0;
-		}
+		eof_track_menu[6].flags = 0;			//Track>Set difficulty> submenu
 
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
@@ -216,6 +207,11 @@ void eof_prepare_track_menu(void)
 			eof_track_menu[1].flags = 0;			//Track>Rocksmith> submenu
 			eof_track_menu[2].flags = 0;			//Track>IMMERROCK> submenu
 
+			if(eof_rocksmith_focus)
+			{	//If non Rocksmith related menu items are to be hidden
+				eof_track_menu[2].flags = D_DISABLED | D_HIDDEN;	//Hide "Track>IMMERROCK>"
+				eof_track_menu[6].flags = D_DISABLED | D_HIDDEN;	//Hide "Track>Set difficulty>"
+			}
 			if(eof_song->pro_guitar_track[tracknum]->ignore_tuning)
 			{
 				eof_track_proguitar_menu[3].flags = D_SELECTED;	//Track>Pro Guitar>Ignore tuning/capo
