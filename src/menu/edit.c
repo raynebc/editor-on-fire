@@ -600,12 +600,14 @@ void eof_prepare_edit_menu(void)
 			else
 			{
 				eof_active_edit_paste_from_menu[5].flags = 0;	//Enable Paste from catalog
-				eof_edit_menu[6].flags = 0;						//Enable the Paste from menu
+				eof_edit_menu[6].flags = 0;					//Enable the Paste from menu
+				eof_edit_paste_from_menu[6].flags = 0;			//Enable the Paste from>Catalog entry name function
 			}
 		}
 		else
 		{
 			eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
+			eof_edit_paste_from_menu[6].flags = D_DISABLED;
 		}
 
 		/* selection */
