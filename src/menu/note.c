@@ -7305,21 +7305,21 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 	{ eof_window_proc,    0,   48,  214, 278,2,   23,  0,    0,      0,         0,   eof_pro_guitar_note_frets_dialog_function_0_string,NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
-	{ d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
+	{ d_agup_text_proc,      75,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
 	{ d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
-	{ eof_verified_edit_proc,74,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6, "0123456789Xx",NULL },
+	{ eof_verified_edit_proc,74,  104, 44,  20, 2,   23,  0,    0,    6,         0,   eof_string_lane_6, "0123456789Xx/",NULL },
 	{ d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
-	{ eof_verified_edit_proc,74,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5, "0123456789Xx",NULL },
+	{ eof_verified_edit_proc,74,  128, 44,  20, 2,   23,  0,    0,    6,         0,   eof_string_lane_5, "0123456789Xx/",NULL },
 	{ d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
-	{ eof_verified_edit_proc,74,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4, "0123456789Xx",NULL },
+	{ eof_verified_edit_proc,74,  152, 44,  20, 2,   23,  0,    0,    6,         0,   eof_string_lane_4, "0123456789Xx/",NULL },
 	{ d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
-	{ eof_verified_edit_proc,74,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3, "0123456789Xx",NULL },
+	{ eof_verified_edit_proc,74,  176, 44,  20, 2,   23,  0,    0,    6,         0,   eof_string_lane_3, "0123456789Xx/",NULL },
 	{ d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
-	{ eof_verified_edit_proc,74,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2, "0123456789Xx",NULL },
+	{ eof_verified_edit_proc,74,  200, 44,  20, 2,   23,  0,    0,    6,         0,   eof_string_lane_2, "0123456789Xx/",NULL },
 	{ d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
-	{ eof_verified_edit_proc,74,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1, "0123456789Xx",NULL },
+	{ eof_verified_edit_proc,74,  224, 44,  20, 2,   23,  0,    0,    6,         0,   eof_string_lane_1, "0123456789Xx/",NULL },
 
-	{ d_agup_text_proc,      110, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
+	{ d_agup_text_proc,      115, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
 	{ eof_verified_edit_proc,130, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "01234XxTt",NULL },
 	{ eof_verified_edit_proc,130, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "01234XxTt",NULL },
 	{ eof_verified_edit_proc,130, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "01234XxTt",NULL },
@@ -7327,13 +7327,13 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 	{ eof_verified_edit_proc,130, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "01234XxTt",NULL },
 	{ eof_verified_edit_proc,130, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "01234XxTt",NULL },
 
-	{ d_agup_text_proc,       170, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
-	{ d_agup_check_proc,    170, 109, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{ d_agup_check_proc,    170, 133, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{ d_agup_check_proc,    170, 157, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{ d_agup_check_proc,    170, 181, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{ d_agup_check_proc,    170, 205, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{ d_agup_check_proc,    170, 229, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_text_proc,       175, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
+	{ d_agup_check_proc,    175, 109, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    175, 133, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    175, 157, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    175, 181, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    175, 205, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    175, 229, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{ d_agup_button_proc,    10,   256, 20,  28, 2,   23,  0,    D_EXIT, 0,       0,   "<-",         NULL,          NULL },
 	{ d_agup_button_proc,    35,   270, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
@@ -7551,7 +7551,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long ctr, ctr2, trackctr, i;
+	unsigned long ctr, ctr2, ctr3, trackctr, i;
 	long fretvalue, fingervalue, highfretvalue;
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	char allmuted;					//Used to track whether all used strings are string muted
@@ -7563,6 +7563,8 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	char retry, fingeringdefined, offerupdatefingering;
 	char rerun;	//Tracks whether the dialog will re-initialize and run again, such as if any buttons other than OK or cancel were used
 	int init_focus;
+	unsigned char slideend = 0;		//Set to nonzero if the user defines a slide ending position in a fret value box
+	char *slideptr, slidetype;
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
@@ -7647,6 +7649,37 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				}//For each of the supported strings
 			}//If any fingering fields are defined, they have to be valid
 
+			//Validate any slide notation specified
+			slideptr = NULL;	//Reset this pointer
+			slidetype = 0;
+			for(ctr = 0; ctr < 6; ctr++)
+			{	//For each of the 6 supported strings
+				for(ctr2 = 0; eof_fret_strings[ctr][ctr2] != '\0'; ctr2++)
+				{	//For each character in the fret string
+					if(eof_fret_strings[ctr][ctr2] == '/')
+					{	//User is defining a slide
+						eof_fret_strings[ctr][ctr2] = '\0';	//Truncate the string to allow the fret value to be parsed
+						slidetype = 1;					//One forward slash means pitched slide
+						for(ctr3 = ctr2 + 1; eof_fret_strings[ctr][ctr3] != '\0'; ctr3++)
+						{	//For each remaining character in the string
+							if(!slideptr && isdigit(eof_fret_strings[ctr][ctr3]))
+							{	//If this is the first numeric character found after a slash in any of the fret input strings in this dialog
+								slideptr = &(eof_fret_strings[ctr][ctr3]);	//Track this pointer
+							}
+							if(eof_fret_strings[ctr][ctr3] == '/')
+							{	//If this is another slash
+								slidetype = 2;					//Two forward slashes mean unpitched slide
+								eof_fret_strings[ctr][ctr3] = '\0';	//Truncate the string to allow the end of slide value to be parsed
+							}
+						}
+					}
+				}
+			}
+			if(slideptr)
+			{
+				slideend = atoi(slideptr);
+			}
+
 			//Apply changes
 			if(!retry)
 			{	//If the finger entries weren't invalid
@@ -7698,6 +7731,8 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 									}
 								}
 							}
+
+							//Parse for string mute
 							if(eof_pro_guitar_note_frets_dialog[27 - ctr].flags == D_SELECTED)
 							{	//If the mute box is checked
 								fretvalue |= 0x80;	//Set the fret value's MSB
@@ -7798,6 +7833,46 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 					{	//If all strings are muted and the user didn't specify a palm mute
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
+					}
+
+		//Update for slide notation
+					if(slideptr && slideend)
+					{	//If slide notation was defined
+						unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(tp, i);	//Determine the lowest used fret value defined in the dialog
+
+						if(slideend == lowestfret)
+						{
+							allegro_message("An invalid slide was defined and will be ignored.");
+							slideptr = NULL;	//Ignore the slide notation
+						}
+						else
+						{
+							if(!*undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								*undo_made = 1;
+							}
+							if(slidetype == 2)
+							{	//Unpitched slide
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+								tp->note[i]->unpitchend = slideend;
+							}
+							else
+							{	//Pitched slide
+								if(slideend < lowestfret)
+								{	//A down slide was defined
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+									tp->note[i]->slideend = slideend;
+								}
+								else
+								{	//An up slide was defined
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
+									tp->note[i]->slideend = slideend;
+								}
+							}
+						}
 					}
 					tp->note[i]->flags = flags;
 				}//For each note in the track
