@@ -148,6 +148,7 @@ int eof_menu_song_waveform_settings(void);
 int eof_menu_song_waveform(void);	//Toggle the display of the waveform on/off, generating the waveform data if necessary
 int eof_menu_song_spectrogram_settings(void);
 int eof_menu_song_spectrogram(void);	//Toggle the display of the spectrogram on/off, generating the spectrogram data if necessary
+int eof_menu_song_heatmap(void);	//Toggle the display of the heatmap on/off
 int eof_menu_song_add_silence(void);
 
 int eof_leading_silence_radio_proc(int msg, DIALOG *d, int c);

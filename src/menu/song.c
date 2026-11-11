@@ -206,6 +206,7 @@ MENU eof_song_menu[] =
 	{"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
 	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
 	{"Spectrogra&m", NULL, eof_spectrogram_menu, 0, NULL},
+	{"Show &Heatmap", eof_menu_song_heatmap, NULL, 0, NULL},
 	{"Highlight non grid snapped notes", eof_menu_song_highlight_non_grid_snapped_notes, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Catalog", NULL, eof_catalog_menu, 0, NULL},
@@ -302,19 +303,19 @@ void eof_prepare_song_menu(void)
 
 		if(eof_rocksmith_focus)
 		{	//If non Rocksmith related menu items are to be hidden
-			eof_song_menu[10].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>INI Settings"
-			eof_song_menu[17].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>Manage raw MIDI tracks"
-			eof_song_menu[19].flags = D_DISABLED | D_HIDDEN;	//Hide line separator
-			eof_song_menu[20].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>Test song>"
+			eof_song_menu[11].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>INI Settings"
+			eof_song_menu[18].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>Manage raw MIDI tracks"
+			eof_song_menu[20].flags = D_DISABLED | D_HIDDEN;	//Hide line separator
+			eof_song_menu[21].flags = D_DISABLED | D_HIDDEN;	//Hide "Song>Test song>"
 
 			eof_song_menu[1].child = eof_rs_focus_track_selected_menu;	//Replace Song>Track> with just the vocal and pro guitar tracks
 		}
 		else
 		{
-			eof_song_menu[10].flags = 0;
-			eof_song_menu[17].flags = 0;
-			eof_song_menu[19].flags = 0;
+			eof_song_menu[11].flags = 0;
+			eof_song_menu[18].flags = 0;
 			eof_song_menu[20].flags = 0;
+			eof_song_menu[21].flags = 0;
 
 			eof_song_menu[1].child = eof_track_selected_menu;	//Restore the complete Song>Track> menu
 		}
@@ -557,11 +558,11 @@ void eof_prepare_song_menu(void)
 		/* catalog */
 		if(!eof_song->catalog->entries && (eof_catalog_menu[6].flags == D_DISABLED))
 		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
-			eof_song_menu[9].flags = D_DISABLED;	//Song>Catalog> submenu
+			eof_song_menu[10].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
 		else
 		{
-			eof_song_menu[9].flags = 0;
+			eof_song_menu[10].flags = 0;
 		}
 
 		/* track */
@@ -584,15 +585,15 @@ void eof_prepare_song_menu(void)
 			}
 		}
 
-		eof_song_menu[7].flags = eof_song->tags->highlight_unsnapped_notes ? D_SELECTED : 0;	//Update "Song>Highlight non grid snapped notes" check status
-		eof_song_menu[12].flags = eof_silence_loaded ? D_DISABLED : 0;	//Update "Song>Leading silence" enable status
-		eof_song_menu[13].flags = eof_song->tags->click_drag_disabled ? D_SELECTED : 0;	//Update "Song>Disable click and drag" check status
+		eof_song_menu[8].flags = eof_song->tags->highlight_unsnapped_notes ? D_SELECTED : 0;	//Update "Song>Highlight non grid snapped notes" check status
+		eof_song_menu[13].flags = eof_silence_loaded ? D_DISABLED : 0;	//Update "Song>Leading silence" enable status
+		eof_song_menu[14].flags = eof_song->tags->click_drag_disabled ? D_SELECTED : 0;	//Update "Song>Disable click and drag" check status
 
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			eof_song_menu[14].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[15].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[16].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -609,8 +610,8 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable and hide these menu items
-			eof_song_menu[14].flags = D_DISABLED | D_HIDDEN;
 			eof_song_menu[15].flags = D_DISABLED | D_HIDDEN;
+			eof_song_menu[16].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		eof_song_piano_roll_menu[0].flags = eof_display_second_piano_roll ? D_SELECTED : 0;	//Update "Song>Second piano roll>Display" check status
@@ -1949,7 +1950,6 @@ int eof_menu_song_waveform(void)
 
 	if(eof_music_paused)
 		eof_render();
-	eof_fix_window_title();
 	eof_close_menu = 1;		//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return 0;	//Return success
@@ -1990,6 +1990,18 @@ int eof_menu_song_spectrogram(void)
 	if(eof_music_paused)
 		eof_render();
 	eof_fix_window_title();
+	eof_close_menu = 1;		//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+
+	return 0;	//Return success
+}
+
+int eof_menu_song_heatmap(void)
+{
+	eof_display_heatmap ^= 1;	//Toggle this boolean variable
+	eof_song_menu[7].flags = eof_display_heatmap ? D_SELECTED : 0;	//Check the Show Heatmap item in the Song menu if appropriate
+
+	if(eof_music_paused)
+		eof_render();
 	eof_close_menu = 1;		//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return 0;	//Return success

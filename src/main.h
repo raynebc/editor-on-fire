@@ -592,6 +592,7 @@ extern int eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_x2, eof_min
 extern int eof_fretboard_boundary_x1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y1, eof_fretboard_boundary_y2;
 extern int eof_beat_marker_boundary_x1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_y2;
 extern int eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_y2;
+extern int eof_scroll_bar_boundary_y1, eof_scroll_bar_boundary_y2;
 extern int eof_mouse_boundary_x1, eof_mouse_boundary_x2, eof_mouse_boundary_y1, eof_mouse_boundary_y2;
 extern char eof_mouse_bound;
 
@@ -631,17 +632,13 @@ extern int eof_color_cyan;
 extern int eof_color_dark_cyan;
 extern int eof_info_color;
 
-extern int eof_color_waveform_trough_raw;
-extern int eof_color_waveform_peak_raw;
-extern int eof_color_waveform_rms_raw;
-extern int eof_color_waveform_trough;
-extern int eof_color_waveform_peak;
-extern int eof_color_waveform_rms;
-extern char eof_waveform_renderlocation;
-extern char eof_waveform_renderleftchannel;
-extern char eof_waveform_renderrightchannel;
-extern char eof_waveform_renderscale_enabled;
-extern unsigned eof_waveform_renderscale;
+extern int eof_color_heatmap_hot_raw;
+extern int eof_color_heatmap_cold_raw;
+extern int eof_color_heatmap_hot;
+extern int eof_color_heatmap_cold;
+extern unsigned short *eof_heatmap;
+extern unsigned long eof_heatmap_size;			//The number of elements in the eof_heatmap array, expected to be the program window width
+extern char eof_display_heatmap;
 
 extern int eof_color_notes_panel_error_bg_raw, eof_color_notes_panel_error_fg_raw;
 extern int eof_color_notes_panel_warning_bg_raw, eof_color_notes_panel_warning_fg_raw;
@@ -1025,5 +1022,13 @@ void eof_draw_dashed_pixel(BITMAP *bmp, int x, int y, int d);
 	//To configure the drawing parameters, call this function with bmp having a value of NULL, x being the number of consecutive pixels to render and y being the consecutive number of pixels to skip
 void eof_draw_dashed_line(BITMAP *bmp, int x1, int y1, int x2, int y2, int color, unsigned drawpixels, unsigned skippixels);
 	//Uses eof_draw_dashed_pixel() and do_line() to render the specified line as a dashed line, where each rendered segment is drawpixels long and each non-rendered segment is skippixels long
+
+void eof_build_heatmap(void);
+	//Allocates memory to store heatmap data if memory has not been allocated to eof_heatmap yet
+	//Builds eof_heatmap[] based on the notes in the active track difficulty
+void eof_render_heatmap(void);
+	//Render the heatmap in place of the seek bar if eof_display_heatmap is nonzero
+void eof_destroy_heatmap(void);
+	//Frees eof_heatmap if it isn't NULL, resets some heatmap variables
 
 #endif

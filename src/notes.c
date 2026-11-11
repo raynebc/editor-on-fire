@@ -3073,6 +3073,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			snprintf(dest_buffer, dest_buffer_size, "Fretboard (%d, %d) - (%d, %d)", eof_fretboard_boundary_x1, eof_fretboard_boundary_y1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y2);
 		else if(eof_mouse_area == 4)
 			snprintf(dest_buffer, dest_buffer_size, "Mini keyboard (%d, %d) - (%d, %d)", eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y2);
+		else if(eof_mouse_area == 5)
+			snprintf(dest_buffer, dest_buffer_size, "Scroll bar (%d, %d) - (%d, %d)", 0, eof_scroll_bar_boundary_y1, eof_window_editor->w - 1, eof_scroll_bar_boundary_y2);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "(Undefined)");
 
 		return 1;
 	}

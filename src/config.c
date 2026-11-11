@@ -8,6 +8,7 @@
 #include "menu/song.h"	//For eof_set_percussion_cue()
 #include "tuning.h"
 #include "utility.h"
+#include "waveform.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -406,6 +407,10 @@ void eof_load_config(char * fn)
 	eof_waveform_renderscale = get_config_int("waveform", "eof_waveform_renderscale", 100);
 	if((eof_waveform_renderscale < 10) || (eof_waveform_renderscale > 999))
 		eof_waveform_renderscale = 100;	//Bounds check
+
+	/* read heatmap colors */
+	eof_color_heatmap_hot_raw = get_config_hex("colors", "eof_color_heatmap_hot", 0xFF0000);			//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_color_heatmap_cold_raw = get_config_hex("colors", "eof_color_heatmap_cold", 0x0000FF);			//The RGB equivalent of makecol(0, 0, 255) (blue)
 
 	/* read notes panel colors */
 	eof_color_notes_panel_error_bg_raw = get_config_hex("colors", "eof_color_notes_panel_error_bg", 0xFF0000);			//The RGB equivalent of makecol(255, 0, 0) (red)
@@ -1312,6 +1317,10 @@ void eof_save_color_config(void)
 	set_config_hex("colors", "eof_color_waveform_peak", eof_color_waveform_peak_raw);
 	set_config_hex("colors", "eof_color_waveform_rms", eof_color_waveform_rms_raw);
 
+	/* write heatmap colors */
+	set_config_hex("colors", "eof_color_heatmap_hot", eof_color_heatmap_hot_raw);
+	set_config_hex("colors", "eof_color_heatmap_cold", eof_color_heatmap_cold_raw);
+
 	/* write notes panel colors */
 	set_config_hex("colors", "eof_color_notes_panel_error_bg", eof_color_notes_panel_error_bg_raw);
 	set_config_hex("colors", "eof_color_notes_panel_error_fg", eof_color_notes_panel_error_fg_raw);
@@ -1351,6 +1360,8 @@ void eof_remake_all_colors(void)
 	eof_color_waveform_trough = eof_remake_color(eof_color_waveform_trough_raw);
 	eof_color_waveform_peak = eof_remake_color(eof_color_waveform_peak_raw);
 	eof_color_waveform_rms = eof_remake_color(eof_color_waveform_rms_raw);
+	eof_color_heatmap_hot = eof_remake_color(eof_color_heatmap_hot_raw);
+	eof_color_heatmap_cold = eof_remake_color(eof_color_heatmap_cold_raw);
 	eof_color_highlight1 = eof_remake_color(eof_color_highlight1_raw);
 	eof_color_highlight2 = eof_remake_color(eof_color_highlight2_raw);
 	eof_color_notes_panel_error_bg = eof_remake_color(eof_color_notes_panel_error_bg_raw);
@@ -1385,6 +1396,10 @@ int eof_load_default_theme(void)
 	eof_color_waveform_trough_raw = 0x007C00;	//The RGB equivalent of makecol(0, 124, 0)
 	eof_color_waveform_peak_raw = 0x00BE00;		//The RGB equivalent of makecol(0, 190, 0)
 	eof_color_waveform_rms_raw = 0xBE0000;		//The RGB equivalent of makecol(190, 0, 0)
+
+	/* heatmap colors */
+	eof_color_heatmap_hot_raw = 0xFF0000;		//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_color_heatmap_cold_raw = 0x0000FF;		//The RGB equivalent of makecol(0, 0, 255) (blue)
 
 	/* notes panel colors */
 	eof_color_notes_panel_error_bg_raw = 0xFF0000;		//The RGB equivalent of makecol(255, 0, 0) (red)
@@ -1428,6 +1443,10 @@ int eof_load_random_theme(void)
 	eof_color_waveform_trough_raw = eof_random_hex();
 	eof_color_waveform_peak_raw = eof_random_hex();
 	eof_color_waveform_rms_raw = eof_random_hex();
+
+	/* read heatmap colors */
+	eof_color_heatmap_hot_raw = eof_random_hex();
+	eof_color_heatmap_cold_raw = eof_random_hex();
 
 	/* notes panel colors */
 	eof_color_notes_panel_error_bg_raw = eof_random_hex();
@@ -1503,6 +1522,10 @@ void eof_load_theme(char *fn)
 	eof_get_config_hex_conditional("colors", "eof_color_waveform_trough", &eof_color_waveform_trough_raw);
 	eof_get_config_hex_conditional("colors", "eof_color_waveform_peak", &eof_color_waveform_peak_raw);
 	eof_get_config_hex_conditional("colors", "eof_color_waveform_rms", &eof_color_waveform_rms_raw);
+
+	/* read heatmap colors */
+	eof_get_config_hex_conditional("colors", "eof_color_heatmap_hot", &eof_color_heatmap_hot_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_heatmap_cold", &eof_color_heatmap_cold_raw);
 
 	/* read notes panel colors */
 	eof_get_config_hex_conditional("colors", "eof_color_notes_panel_error_bg", &eof_color_notes_panel_error_bg_raw);

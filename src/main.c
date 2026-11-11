@@ -415,11 +415,12 @@ int         eof_paste_at_mouse = 0;
 int         eof_notes_moved = 0;
 
 /* Coordinate regions */
-int eof_mouse_area = 0;		//Is set within the editor logic to summarize the region of the editor the mouse is within (1 = difficulty tabs, 2 = beat markers, 3 = fretboard, 4 = vocal mini keyboard, 0 = other)
+int eof_mouse_area = 0;		//Is set within the editor logic to summarize the region of the editor the mouse is within (1 = difficulty tabs, 2 = beat markers, 3 = fretboard, 4 = vocal mini keyboard, 5 = scroll bar, 0 = other)
 int eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_y2;	//Inclusive coordinate boundaries for the mini keyboard area
 int eof_fretboard_boundary_x1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y1, eof_fretboard_boundary_y2;					//Inclusive coordinate boundaries for the fretboard area
 int eof_beat_marker_boundary_x1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_y2;			//Inclusive coordinate boundaries for the beat marker area
 int eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_y2;		//Inclusive coordinate boundaries for the difficulty tab area
+int eof_scroll_bar_boundary_y1, eof_scroll_bar_boundary_y2;																//Inclusive Y coordinate boundaries for the scroll bar.  The X coordinates spans the entire width of eof_window_editor
 int eof_mouse_boundary_x1 = 0, eof_mouse_boundary_x2 = 0, eof_mouse_boundary_y1 = 0, eof_mouse_boundary_y2 = 0;				//Inclusive coordinate boundaries constraining the mouse during a click and drag operation
 char eof_mouse_bound = 0;																							//Tracks whether the mouse is bound bound within the above set of coordinates
 
@@ -533,18 +534,14 @@ int eof_key_shifts = 0;	//Used to track the value of key_shifts since the last c
 int eof_last_key_char = 0;
 int eof_last_key_code = 0;
 
-/* waveform graph settings */
-int eof_color_waveform_trough_raw;			//The raw hex formatted RRGGBB colors that need to be converted
-int eof_color_waveform_peak_raw;
-int eof_color_waveform_rms_raw;
-int eof_color_waveform_trough;				//The colors build by makecol()
-int eof_color_waveform_peak;
-int eof_color_waveform_rms;
-char eof_waveform_renderlocation = 0;			//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
-char eof_waveform_renderleftchannel = 1;		//Specifies whether the left channel's graph should render
-char eof_waveform_renderrightchannel = 0;		//Specifies whether the right channel's graph should render
-char eof_waveform_renderscale_enabled = 0;	//Specifies whether waveform graph height scaling is enabled
-unsigned eof_waveform_renderscale = 100;		//Specifies a scale factor for the render height to make the graph taller and more visible
+/* heatmap settings */
+int eof_color_heatmap_hot_raw;			//The raw hex formatted RRGGBB colors that need to be converted
+int eof_color_heatmap_cold_raw;
+int eof_color_heatmap_hot;				//The colors built by makecol()
+int eof_color_heatmap_cold;
+unsigned short *eof_heatmap = NULL;		//The number of gems calculated to exist in the time scope of each pixel of the scroll bar (note tails included)
+unsigned long eof_heatmap_size = 0;		//The number of elements in the eof_heatmap array, expected to be the program window width
+char eof_display_heatmap = 0;
 
 /* notes panel colors */
 int eof_color_notes_panel_error_bg_raw, eof_color_notes_panel_error_fg_raw;
@@ -5692,6 +5689,7 @@ void eof_exit(void)
 	eof_destroy_ogg();	//Frees chart audio
 	eof_destroy_song(eof_song);	//Frees memory used by any currently loaded chart
 	eof_destroy_waveform(eof_waveform);	//Frees memory used by any currently loaded waveform data
+	eof_destroy_heatmap();
 	eof_waveform = NULL;
 	eof_destroy_spectrogram(eof_spectrogram);	//Frees memory used by any currently loaded spectrogram data
 	eof_spectrogram = NULL;
@@ -7350,6 +7348,128 @@ void eof_draw_dashed_line(BITMAP *bmp, int x1, int y1, int x2, int y2, int color
 {
 	eof_draw_dashed_pixel(NULL, drawpixels, skippixels, 0);	//Initialize this function
 	do_line(bmp, x1, y1, x2, y2, color, eof_draw_dashed_pixel);
+}
+
+void eof_build_heatmap(void)
+{
+	double slicetime;	//The length of time (in milliseconds) that one pixel's width of the map represents
+	unsigned long ctr, ctr2, tracksize, start, end, slicestart, sliceend, gemcount;
+
+	if(!eof_window_editor || (eof_window_editor->w < 3) || !eof_song)
+		return;	//Logic error
+
+	//Allocate/re-allocate memory as appropriate
+	if(eof_heatmap && (eof_heatmap_size != eof_window_editor->w - 2))
+	{	//If the program window size has changed since the heatmap array was allocated
+		free(eof_heatmap);	//Free the memory so it can be re-allocated
+		eof_heatmap = NULL;
+	}
+	if(!eof_heatmap)
+	{	//if the heatmap array isn't allocated
+		eof_log("Building heatmap", 1);
+		eof_heatmap_size = eof_window_editor->w - 2;	//The first two pixels of the seek bar would render with a silver border and black padding
+		eof_heatmap = (unsigned short *)malloc(eof_heatmap_size * sizeof(unsigned short));
+		if(!eof_heatmap)
+		{
+			eof_log("!Could not allocate memory for heatmap", 1);
+			eof_display_heatmap = 0;
+			return;
+		}
+	}
+
+	//Create the heatmap data
+	slicetime = (double)eof_chart_length / (double)eof_heatmap_size;	//The chart's total length divided by the number of pixels in the program window
+	memset(eof_heatmap, 0, sizeof(unsigned short) * eof_heatmap_size);	//Clear the counter values in this array
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)
+			continue;	//If this note isn't in the active difficulty, skip it
+
+		//Find which slices of the heatmap the note occupies
+		start = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+		end = start + eof_get_note_length(eof_song, eof_selected_track, ctr);
+		slicestart = (double)start / slicetime + 0.5;	//Find which slice of the heatmap this note begins in
+		sliceend = (double)end / slicetime + 0.5;	//Find which slice of the heatmap this note ends in
+		if(sliceend >= eof_heatmap_size)
+			sliceend = eof_heatmap_size - 1;		//Bounds check
+
+		//Count up the number of gems occupying each slice of the heatmap
+		gemcount = eof_note_count_colors(eof_song, eof_selected_track, ctr);		//The number of gems in this note
+		for(ctr2 = slicestart; ctr2 <= sliceend; ctr2++)
+		{	//For each slice of the heatmap occupied by this note
+			eof_heatmap[ctr2] += gemcount;	//Add the number of gems to this heatmap slice's count
+		}
+	}
+}
+
+void eof_render_heatmap(void)
+{
+	//The variables tracking the defined RGB colors of the hot and cold values of the heatmap
+	int hot_red = (eof_color_heatmap_hot & 0xFF0000) >> 16;
+	int hot_green = (eof_color_heatmap_hot & 0x00FF00) >> 8;
+	int hot_blue = eof_color_heatmap_hot & 0x0000FF;
+	int cold_red = (eof_color_heatmap_cold & 0xFF0000) >> 16;
+	int cold_green = (eof_color_heatmap_cold & 0x00FF00) >> 8;
+	int cold_blue = eof_color_heatmap_cold & 0x0000FF;
+	int red_diff = hot_red - cold_red;
+	int green_diff = hot_green - cold_green;
+	int blue_diff = hot_blue - cold_blue;
+	int cold_color = makecol(cold_red, cold_green, cold_blue);	//Cache this as much of the heatmap will be without gems
+
+	int slice_red, slice_green, slice_blue, slice_color;	//The color variables for one slice of the heatmap
+	unsigned long ctr;
+	unsigned short heatmap_max = 0;	//The highest count found in the heatmap
+	double gradient;					//The fraction representing how far between the minimum and maximum count a specific slice of heatmap is
+
+	if(!eof_display_heatmap)
+		return;	//Don't render the heatmap if it isn't enabled
+
+	eof_build_heatmap();	//Build the heatmap data based on the active track difficulty
+	if(!eof_heatmap)
+		return;	//Don't render the heatmap if the data wasn't successfully created
+
+	//Find the highest count in the heatmap array
+	for(ctr = 0; ctr < eof_heatmap_size; ctr++)
+	{	//For each slice (one pixel width's worth) of the heatmap
+		if(eof_heatmap[ctr] > heatmap_max)
+			heatmap_max = eof_heatmap[ctr];
+	}
+
+	//Draw the heatmap
+	for(ctr = 0; ctr < eof_heatmap_size; ctr++)
+	{	//For each slice (one pixel width's worth) of the heatmap
+		if(!eof_heatmap[ctr])
+		{	//If there are no gems in this heatmap segment
+			slice_color = cold_color;	//Draw the cold color
+		}
+		else
+		{	//Otherwise the correct color must be calculated
+			gradient = (double)eof_heatmap[ctr] / (double)heatmap_max;
+			slice_red = cold_red + (gradient * red_diff) + 0.5;			//Find the red color intensity of this slice
+			if(slice_red > hot_red)
+				slice_red = hot_red;		//Cap at the defined hot value
+			slice_green = cold_green + (gradient * green_diff) + 0.5;	//Find the green color intensity of this slice
+			if(slice_green > hot_green)
+				slice_green = hot_green;	//Cap at the defined hot value
+			slice_blue = cold_blue + (gradient * blue_diff) + 0.5;		//Find the blue color intensity of this slice
+			if(slice_blue > hot_blue)
+				slice_blue = hot_blue;	//Cap at the defined hot value
+			slice_color = makecol(slice_red, slice_green, slice_blue);	//Build the RGB color for this slice
+		}
+		vline(eof_window_editor->screen, ctr + 2, eof_screen_layout.scrollbar_y, eof_window_editor->h - 2, slice_color);	//Draw this slice of the heatmap in that color (take into account that the first two pixels of the seek bar would render with a silver border and black padding)
+	}
+}
+
+void eof_destroy_heatmap(void)
+{
+	if(eof_heatmap)
+	{
+		eof_log("Heatmap destroyed", 1);
+		free(eof_heatmap);
+		eof_heatmap = NULL;
+		eof_heatmap_size = 0;
+	}
 }
 
 END_OF_MAIN()

@@ -5425,6 +5425,12 @@ void eof_editor_logic(void)
 					(void) do_menu(eof_effective_beat_menu, lpos, mouse_y);
 					eof_clear_input();
 				}
+				else if((eof_scaled_mouse_y >= eof_scroll_bar_boundary_y1) && (eof_scaled_mouse_y <= eof_scroll_bar_boundary_y2))
+				{	//mouse is in the scroll bar area
+					eof_mouse_area = 5;
+					while(mouse_b & 2);	//Wait until the right mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
+					(void) eof_menu_song_heatmap();	//Toggle the heat map on/off
+				}
 				else if((eof_scaled_mouse_x >= eof_fretboard_boundary_x1) && (eof_scaled_mouse_x <= eof_fretboard_boundary_x2) && (eof_scaled_mouse_y >= eof_fretboard_boundary_y1) && (eof_scaled_mouse_y <= eof_fretboard_boundary_y2))
 				{	//mouse is in the fretboard area
 					eof_mouse_area = 3;
@@ -6155,6 +6161,12 @@ void eof_vocal_editor_logic(void)
 				eof_prepare_menus();
 				(void) do_menu(eof_effective_beat_menu, lpos, mouse_y);
 				eof_clear_input();
+			}
+			else if((eof_scaled_mouse_y >= eof_scroll_bar_boundary_y1) && (eof_scaled_mouse_y <= eof_scroll_bar_boundary_y2))
+			{	//mouse is in the scroll bar area
+				eof_mouse_area = 5;
+				while(mouse_b & 2);	//Wait until the right mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
+				(void) eof_menu_song_heatmap();	//Toggle the heat map on/off
 			}
 			else if((eof_scaled_mouse_x >= eof_fretboard_boundary_x1) && (eof_scaled_mouse_x <= eof_fretboard_boundary_x2) && (eof_scaled_mouse_y >= eof_fretboard_boundary_y1) && (eof_scaled_mouse_y <= eof_fretboard_boundary_y2))
 			{	//mouse is in the fretboard area
@@ -7667,8 +7679,15 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	/* render the scroll bar */
 	if(window != eof_window_editor2)
 	{	//Only draw the scroll bar for the main piano roll
+		if(eof_display_heatmap)
+		{	//If the heatmap is enabled
+			eof_render_heatmap();
+		}
+		else
+		{	//Otherwise render a solid rectangle for the scroll bar
+			rectfill(window->screen, 0, eof_screen_layout.scrollbar_y, window->w - 1, window->h - 2, eof_color_fill_accent);
+		}
 		scroll_pos = ((double)(window->w - 8.0) / (double)eof_chart_length) * (double)eof_music_pos.value;
-		rectfill(window->screen, 0, eof_screen_layout.scrollbar_y, window->w - 1, window->h - 2, eof_color_fill_accent);
 		draw_sprite(window->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
 
 		vline(window->screen, 0, 24 + 8, window->h + 4, eof_color_dark_silver);
@@ -7857,6 +7876,9 @@ void eof_editor_logic_common(void)
 		eof_scaled_mouse_x = mouse_x / 2;
 		eof_scaled_mouse_y = mouse_y / 2;
 	}
+
+	eof_scroll_bar_boundary_y1 = eof_window_editor->y + eof_window_editor->h - 17;	//Get inclusive coordinates for the scroll bar area
+	eof_scroll_bar_boundary_y2 = eof_window_editor->y + eof_window_editor->h - 1;
 
 	if(eof_music_paused)
 	{	//If the chart is paused
@@ -8116,11 +8138,16 @@ void eof_editor_logic_common(void)
 		}
 
 		/* handle scroll bar click */
-		if((eof_scaled_mouse_y >= eof_window_editor->y + eof_window_editor->h - 17) && (eof_scaled_mouse_y < eof_window_editor->y + eof_window_editor->h))
+		if((eof_scaled_mouse_y >= eof_scroll_bar_boundary_y1) && (eof_scaled_mouse_y <= eof_scroll_bar_boundary_y2))
 		{
+			eof_mouse_area = 5;
 			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
 				eof_music_actual_pos = ((double)eof_chart_length / (double)(eof_window_editor->w - 8.0)) * (double)(eof_scaled_mouse_x - 4.0);
+				if(eof_scaled_mouse_x < 4)
+				{
+					eof_music_actual_pos = 0;	//Ensure that this coordinate logic doesn't underflow
+				}
 				if(eof_music_actual_pos > eof_chart_length)
 				{
 					eof_music_actual_pos = eof_chart_length;

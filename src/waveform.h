@@ -36,9 +36,17 @@ struct wavestruct
 
 extern struct wavestruct *eof_waveform;		//Stores the waveform data
 extern char eof_display_waveform;			//Specifies whether the waveform display is enabled
+extern int eof_color_waveform_trough_raw;
+extern int eof_color_waveform_peak_raw;
+extern int eof_color_waveform_rms_raw;
+extern int eof_color_waveform_trough;
+extern int eof_color_waveform_peak;
+extern int eof_color_waveform_rms;
 extern char eof_waveform_renderlocation;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
 extern char eof_waveform_renderleftchannel;	//Specifies whether the left channel's graph should render
 extern char eof_waveform_renderrightchannel;	//Specifies whether the right channel's graph should render
+extern char eof_waveform_renderscale_enabled;
+extern unsigned eof_waveform_renderscale;
 
 void eof_destroy_waveform(struct wavestruct *ptr);
 	//frees memory used by the specified waveform structure

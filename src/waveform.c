@@ -13,6 +13,17 @@
 
 struct wavestruct *eof_waveform = NULL;	//Stores the waveform data
 char eof_display_waveform = 0;			//Specifies whether the waveform display is enabled
+int eof_color_waveform_trough_raw;			//The raw hex formatted RRGGBB colors that need to be converted
+int eof_color_waveform_peak_raw;
+int eof_color_waveform_rms_raw;
+int eof_color_waveform_trough;				//The colors built by makecol()
+int eof_color_waveform_peak;
+int eof_color_waveform_rms;
+char eof_waveform_renderlocation = 0;			//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
+char eof_waveform_renderleftchannel = 1;		//Specifies whether the left channel's graph should render
+char eof_waveform_renderrightchannel = 0;		//Specifies whether the right channel's graph should render
+char eof_waveform_renderscale_enabled = 0;	//Specifies whether waveform graph height scaling is enabled
+unsigned eof_waveform_renderscale = 100;		//Specifies a scale factor for the render height to make the graph taller and more visible
 
 int eof_waveform_slice_mean(struct waveformslice *left, struct waveformslice *right, struct wavestruct *waveform, unsigned long slicestart, unsigned long num)
 {
@@ -554,6 +565,8 @@ struct wavestruct *eof_create_waveform(char *oggfilename, unsigned long slicelen
 	stop = clock();
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWaveform generated in %f seconds", (double)(stop - start) / (double)CLOCKS_PER_SEC);
 	eof_log(eof_log_string, 1);
+	eof_fix_window_title();	//Restore the normal window title
+
 	return waveform;	//Return waveform data
 }
 
