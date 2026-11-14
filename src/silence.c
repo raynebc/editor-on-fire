@@ -214,7 +214,7 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	silence_sample = create_silence_sample(ms);
 	if(!silence_sample)
 	{
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 		return 3;	//Return error:  Couldn't create silent audio
 	}
 
@@ -233,14 +233,14 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	#endif
 	if(eof_system(sys_command))
 	{
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 		return 4;	//Return error:  Could not encode silent audio
 	}
 
 	/* stitch the original file to the silence file */
 	if(!getcwd(old_wd, sizeof(old_wd)))
 	{	//If the current working directory could not be obtained
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 		return 5;	//Return error:  Could not obtain current working directory
 	}
 
@@ -278,7 +278,7 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError issuing command \"%s\" from path \"%s\"", sys_command, eof_song_path);
 		eof_log(eof_log_string, 1);
 		(void) eof_copy_file(backupfn, oggfn);	//Restore the original OGG file
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 		return 7;	//Return error:  oggCat failed
 	}
 
@@ -291,11 +291,11 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 		eof_chart_length = eof_music_length;
 		return 0;	//Return success
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	//If this part of the function is reached, the OGG failed to load
 	if(exists(oggfn))
@@ -514,7 +514,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 			{	//Run one last time to catch the error output
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOggenc failed.  Please see %s for any errors it gave.", tempfname);
 				eof_log(eof_log_string, 1);
-				eof_fix_window_title();
+				eof_window_title_dirty = 1;
 				return 48;	//Return failure:  Could not encode combined audio
 			}
 		}
@@ -534,11 +534,11 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 		eof_chart_length = eof_music_length;
 		return 0;	//Return success
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	return 49;	//Return error:  Could not load new audio
 }
@@ -735,7 +735,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 			{	//Run one last time to catch the error output
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOggenc failed.  Please see %s for any errors it gave.", tempfname);
 				eof_log(eof_log_string, 1);
-				eof_fix_window_title();
+				eof_window_title_dirty = 1;
 				return 27;	//Return failure:  Could not encode combined audio
 			}
 		}
@@ -762,11 +762,11 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
 		eof_fix_spectrogram();
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 		eof_chart_length = eof_music_length;
 		return 0;	//Return success
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	return 28;	//Return error:  Could not load new audio
 }

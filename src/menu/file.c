@@ -810,7 +810,7 @@ int eof_menu_file_load(void)
 		{
 			eof_song_loaded = 0;
 			allegro_message("Error loading song!");
-			eof_fix_window_title();
+			eof_window_title_dirty = 1;
 			return 1;
 		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSet eof_song_path to \"%s\"", eof_song_path);
@@ -841,7 +841,7 @@ int eof_menu_file_load(void)
 				eof_show_mouse(NULL);
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
-				eof_fix_window_title();
+				eof_window_title_dirty = 1;
 				return 1;
 			}
 		}
@@ -1105,7 +1105,7 @@ int eof_menu_file_save_logic(char silent)
 	eof_render();
 
 	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return retval;
 }
 
@@ -1314,7 +1314,6 @@ int eof_menu_file_midi_import(void)
 		{
 			eof_song_loaded = 0;
 			allegro_message("Could not import MIDI!");
-			eof_fix_window_title();
 			eof_changes = 0;
 			eof_undo_last_type = 0;
 			eof_change_count = 0;
@@ -1324,7 +1323,7 @@ int eof_menu_file_midi_import(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	eof_log("\tMIDI loaded", 1);
 
@@ -1581,7 +1580,7 @@ int eof_menu_file_settings(void)
 		if(eof_phase_cancellation)
 			eof_center_isolation = 0;	//These settings can't both be enabled simultaneously
 
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -1918,7 +1917,7 @@ int eof_menu_file_preferences(void)
 	}
 	(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
 	eof_rebuild_notes_window();					//Recreate the notes panel window to fill all available space in the bottom half of the program window
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	eof_log("Preferences logic exiting.", 2);
 	return 1;
@@ -3121,13 +3120,13 @@ int eof_menu_file_feedback_import(void)
 		{
 			eof_song_loaded = 0;
 			eof_changes = 0;
-			eof_fix_window_title();
+			eof_window_title_dirty = 1;
 		}
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	return 1;
 }
@@ -3806,7 +3805,7 @@ int eof_new_chart(char * filename)
 	eof_song_loaded = 1;
 	eof_init_after_load(0);	//Initialize variables
 	eof_changes = eof_project_unsaved = 1;	//Reflect that until a save has been performed, no project file has been written to disk
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
@@ -5179,7 +5178,7 @@ int eof_save_helper(char *destfilename, char silent)
 							}
 						}
 						destroy_sample(decoded);	//Release buffered chart audio
-						eof_fix_window_title();
+						eof_window_title_dirty = 1;
 					}
 				}
 			}
@@ -5272,7 +5271,7 @@ int eof_save_helper(char *destfilename, char silent)
 	}
 	eof_undo_last_type = 0;
 	eof_change_count = 0;
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
 	eof_process_beat_statistics(eof_song, eof_selected_track);		//Re-cache beat information (from the perspective of the active track), since temporary MIDI events may have been added/removed and can cause cached section event numbers to be invalid
 
@@ -5429,13 +5428,13 @@ int eof_menu_file_gh_import(void)
 			allegro_message("Could not import GH file!");
 			eof_song_loaded = 0;
 			eof_changes = 0;
-			eof_fix_window_title();
+			eof_window_title_dirty = 1;
 		}
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	return 1;
 }
@@ -6392,7 +6391,7 @@ int eof_menu_file_gp_import(void)
 		}
 		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", sizeof(eof_last_gp_path));	//Set the last loaded GP file path
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_render();
 
@@ -6778,7 +6777,7 @@ int eof_menu_file_rs_import(void)
 			}
 		}
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_render();
 
 	return D_O_K;

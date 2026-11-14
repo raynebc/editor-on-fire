@@ -3927,7 +3927,7 @@ int eof_menu_beat_estimate_bpm(void)
 		eof_log(eof_log_string, 1);
 
 		result = eof_estimate_bpm(eof_music_track, start, end);
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMiniBPM processed %lu samples and determined a tempo of %fBPM", eof_bpm_estimator_sample_count, result);
 		eof_log(eof_log_string, 1);
@@ -3958,7 +3958,7 @@ int eof_menu_beat_estimate_bpm(void)
 		eof_log("Estimating tempo of entire song", 1);
 
 		result = eof_estimate_bpm(eof_music_track, 0, 0);
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMiniBPM processed %lu samples and determined a tempo of %fBPM", eof_bpm_estimator_sample_count, result);
 		eof_log(eof_log_string, 1);
@@ -4171,7 +4171,7 @@ int eof_menu_beat_lock_tempo_map(void)
 {
 	if(eof_song)
 		eof_song->tags->tempo_map_locked ^= 1;	//Toggle this boolean variable
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return 1;
 }
 

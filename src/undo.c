@@ -300,7 +300,7 @@ int eof_undo_apply(void)
 		}
 	}
 
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return 1;
 }
 
@@ -395,7 +395,7 @@ void eof_redo_apply(void)
 				eof_menu_pro_guitar_track_enable_tech_view(tp);
 			}
 		}
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 	}
 }
 

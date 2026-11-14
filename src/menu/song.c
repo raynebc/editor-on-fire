@@ -1211,6 +1211,7 @@ int eof_menu_song_properties(void)
 		if(!undo_made && (difficulty != eof_song->tags->difficulty))
 		{	//If the band difficulty field was edited, make an undo state if one hasn't been made already
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
 		}
 		eof_song->tags->difficulty = difficulty;	//Save the value reflected by the band difficulty field
 		if(eof_song->tags->accurate_ts != oldaccurate_ts)
@@ -1238,7 +1239,7 @@ int eof_menu_song_properties(void)
 		}
 		eof_truncate_chart(eof_song);
 		eof_fixup_notes(eof_song);
-		eof_fix_window_title();
+		eof_window_title_dirty = 1;
 	}//User clicked OK
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1531,7 +1532,7 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		if(updatetitle)
 		{	//If the program window title is to be updated
-			eof_fix_window_title();
+			eof_window_title_dirty = 1;
 		}
 		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 		eof_set_3D_lane_positions(0);
@@ -1989,7 +1990,7 @@ int eof_menu_song_spectrogram(void)
 
 	if(eof_music_paused)
 		eof_render();
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_close_menu = 1;		//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return 0;	//Return success
@@ -2221,7 +2222,7 @@ int eof_menu_song_add_silence(void)
 					if(eof_load_ogg(eof_loaded_ogg_name, 0))
 					{	//If the audio was loaded
 						eof_fix_waveform_graph();
-						eof_fix_window_title();
+						eof_window_title_dirty = 1;
 					}
 				}
 			}
@@ -2351,7 +2352,7 @@ int eof_menu_song_add_silence(void)
 			eof_calculate_beats(eof_song);
 			(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
-			eof_fix_window_title();
+			eof_window_title_dirty = 1;
 			eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
 			eof_song_reapply_all_dynamic_highlighting();
 		}
@@ -2895,7 +2896,7 @@ int eof_menu_song_spectrogram_settings(void)
 			eof_spectrogram->px_to_freq.dirty = 1;
 		}
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -2954,7 +2955,7 @@ int eof_menu_song_legacy_view(void)
 		eof_song_proguitar_menu[0].flags = D_SELECTED;
 		eof_scale_fretboard(5);	//Recalculate the 2D screen positioning based on a 5 lane track
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return 1;
 }
 
@@ -3886,7 +3887,7 @@ int eof_menu_song_disable_click_drag(void)
 {
 	if(eof_song)
 		eof_song->tags->click_drag_disabled ^= 1;	//Toggle this boolean variable
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return 1;
 }
 
@@ -4604,14 +4605,14 @@ int eof_menu_song_toggle_piano_roll_sync(void)
 int eof_menu_song_rocksmith_fingering_view(void)
 {
 	eof_fingering_view ^= 1;	//Toggle this boolean variable
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return 1;
 }
 
 int eof_menu_song_flat_dd_view(void)
 {
 	eof_flat_dd_view ^= 1;	//Toggle this boolean variable
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return 1;
 }
 

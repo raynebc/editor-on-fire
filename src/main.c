@@ -285,7 +285,7 @@ char        eof_render_grid_lines = 0;			//Specifies whether grid snap positions
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
-int         eof_window_title_dirty = 0;	//This is set to true when an undo state is made and is cleared when the window title is recreated with eof_fix_window_title()
+int         eof_window_title_dirty = 0;			//This is set to true when the program window title needs to be redrawin in the main loop, when eof_render() conditionally calls eof_fix_window_title()
 int         eof_change_count = 0;	//Counts the number of undo states created since the last save operation
 int         eof_zoom = 10;			//The width of one pixel in the editor window in ms (smaller = higher zoom)
 int         eof_zoom_3d = 5;
@@ -1571,7 +1571,7 @@ void eof_prepare_undo(int type)
 	}
 	eof_redo_toggle = 0;
 	eof_undo_toggle = 1;
-	eof_fix_window_title();	//Redraw the window title to reflect the chart is modified
+	eof_window_title_dirty = 1;	//Redraw the window title to reflect the chart is modified
 	eof_window_title_dirty = 1;	//Indicate that the window title will need to be redrawn during the next normal render, to reflect whatever change is to follow this undo state
 	if(!eof_disable_backups && (eof_change_count % 10 == 0))
 	{	//If automatic backups are not disabled, backup the EOF project every 10 undo states
@@ -2438,7 +2438,7 @@ int eof_load_ogg(char * filename, char function)
 		}
 	}
 
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_log("\teof_load_ogg() completed", 2);
 
 	return loaded;
@@ -5824,7 +5824,7 @@ void eof_init_after_load(char initaftersavestate)
 	eof_prepare_menus();
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
 	eof_sort_events(eof_song);
 	eof_delete_blank_events(eof_song);
@@ -7395,7 +7395,14 @@ void eof_build_heatmap(void)
 			sliceend = eof_heatmap_size - 1;		//Bounds check
 
 		//Count up the number of gems occupying each slice of the heatmap
-		gemcount = eof_note_count_colors(eof_song, eof_selected_track, ctr);		//The number of gems in this note
+		if(eof_track_is_vocal_track(eof_song, eof_selected_track))
+		{	//If this is a vocal track, count the lyric as one
+			gemcount = 1;
+		}
+		else
+		{	//Otherwise count the number of gems in the note
+			gemcount = eof_note_count_colors(eof_song, eof_selected_track, ctr);		//The number of gems in this note
+		}
 		for(ctr2 = slicestart; ctr2 <= sliceend; ctr2++)
 		{	//For each slice of the heatmap occupied by this note
 			eof_heatmap[ctr2] += gemcount;	//Add the number of gems to this heatmap slice's count

@@ -873,7 +873,7 @@ int eof_track_rename(void)
 		}
 	}
 
-	eof_fix_window_title();	//Update EOF's window title
+	eof_window_title_dirty = 1;
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
@@ -3155,7 +3155,7 @@ int eof_track_rocksmith_toggle_difficulty_limit(void)
 			eof_note_type = 4;
 		}
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_determine_phrase_status(eof_song, eof_selected_track);	//Update note flags because tremolo phrases behave different depending on the difficulty numbering in effect
 	return 1;
 }
@@ -3280,7 +3280,7 @@ int eof_track_rocksmith_insert_difficulty(void)
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
 	eof_song->track[eof_selected_track]->numdiffs++;	//Increment the track's difficulty counter
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
-	eof_fix_window_title();	//Redraw the window title in case the active difficulty was incremented to compensate for inserting a difficulty below the active difficulty
+	eof_window_title_dirty = 1;	//Redraw the window title in case the active difficulty was incremented to compensate for inserting a difficulty below the active difficulty
 	return 1;
 }
 
@@ -4007,7 +4007,7 @@ int eof_menu_track_disable_double_bass_drums(void)
 {
 	if(eof_song)
 		eof_song->tags->double_bass_drum_disabled ^= 1;	//Toggle this boolean variable
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return 1;
 }
 
@@ -4029,7 +4029,7 @@ int eof_menu_track_drumsrock_enable_drumsrock_export(void)
 		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	}
 
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_set_color_set();		//This setting changes the color set
 
 	return 1;
@@ -4054,7 +4054,7 @@ int eof_menu_track_drumsrock_enable_remap(void)
 		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	}
 
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_set_color_set();		//This setting changes the color set
 
 	return 1;
@@ -4082,7 +4082,7 @@ int eof_menu_track_beatable_enable_beatable_export(void)
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Ensure necessary statuses such as crazy and disjointed are applied immediately
 	}
 
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_set_color_set();		//This setting changes the color set
 
 	return 1;
@@ -5426,7 +5426,7 @@ int eof_menu_track_toggle_tech_view(void)
 	(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Re-count the number of notes in the currently active array
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return 1;
 }
 
@@ -6359,7 +6359,7 @@ int eof_track_menu_enable_ghl_mode(void)
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
 	eof_set_color_set();
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_prepare_track_menu();	///For some reason, it seems activating this menu function by keyboard and then immediately opening the track menu again by keyboard doesn't reflect the correct
 								///GHL status because the menu prepare logic doesn't get re-run before the menu launches
 	eof_render();

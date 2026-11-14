@@ -1308,9 +1308,13 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
  	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 
-	memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
-	memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
-	memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
+	if(track == eof_selected_track)
+	{	//If the active track is being processed, rebuild these status arrays
+		memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
+		memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
+		memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
+		memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
+	}
 	eof_note_type_name[0][0] = ' ';
 	eof_note_type_name[1][0] = ' ';
 	eof_note_type_name[2][0] = ' ';
@@ -1338,12 +1342,18 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 			if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
 			{
 				eof_vocal_tab_name[0][0] = '*';
-				eof_track_diff_populated_status[0] = 1;
+				if(track == eof_selected_track)
+				{	//If the active track is being processed
+					eof_track_diff_populated_status[0] = 1;
+				}
 			}
 		}
 		else
 		{
-			eof_track_diff_populated_status[note_type] = 1;
+			if(track == eof_selected_track)
+			{	//If the active track is being processed
+				eof_track_diff_populated_status[note_type] = 1;
+			}
 			if(note_type >= numdiffs)
 			{	//If this note's difficulty is the highest encountered in the track so far
 				numdiffs = note_type + 1;
@@ -1363,8 +1373,8 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 				}
 			}
 		}
-		if(eof_note_is_highlighted(sp, track, i))
-		{	//If the note/lyric has highlighting
+		if(eof_note_is_highlighted(sp, track, i) && (track == eof_selected_track))
+		{	//If the note/lyric has highlighting, and the active track is being processed
 			eof_track_diff_highlighted_status[note_type] = 1;
 		}
 	}
@@ -1381,13 +1391,15 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	{	//Otherwise if tech view is not in effect, the pgnotes counter is not yet up to date after a deletion operation
 		tp->pgnotes = tp->notes;	//Update it
 	}
-	memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
 	for(i = 0; i < tp->technotes; i++)
 	{
-		eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
-		if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || ((tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT) && sp->tags->highlight_unsnapped_notes))
-		{	//If the tech note has highlighting
-			eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
+		if(track == eof_selected_track)
+		{	//If the active track is being processed
+			eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
+			if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || ((tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT) && sp->tags->highlight_unsnapped_notes))
+			{	//If the tech note has highlighting
+				eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
+			}
 		}
 	}
 
@@ -9162,7 +9174,7 @@ int eof_create_image_sequence(char benchmark_only)
 		eof_log(windowtitle, 1);
 	}
 
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	if(!benchmark_only)
 	{
@@ -11253,8 +11265,11 @@ void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char funct
 		loopcount = 2;	//The main loop will run a second time to process the inactive note set
 	}
 
-	memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
-	memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
+	if(track == eof_selected_track)
+	{	//If the active track is being processed, clear the highlighting status so it can be rebuilt with eof_detect_difficulties() later
+		memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
+		memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
+	}
 
 	for(ctr2 = 0; ctr2 < loopcount; ctr2++)
 	{	//For each note set in the specified track

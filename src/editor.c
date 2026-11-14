@@ -1559,7 +1559,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						eof_note_type++;
 					}
 				}
-				eof_fix_window_title();
+				eof_window_title_dirty = 1;
 				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			}
 			eof_mix_find_claps();
@@ -2547,7 +2547,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_phase_cancellation ^= 1;
 			}
 			eof_use_key();
-			eof_fix_window_title();
+			eof_window_title_dirty = 1;
 		}
 	}
 
@@ -2566,7 +2566,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_center_isolation ^= 1;
 			}
 			eof_use_key();
-			eof_fix_window_title();
+			eof_window_title_dirty = 1;
 		}
 	}
 
@@ -5394,7 +5394,7 @@ void eof_editor_logic(void)
 				eof_note_type = eof_hover_type;
 				eof_mix_find_claps();
 				eof_mix_start_helper();
-				eof_fix_window_title();
+				eof_window_title_dirty = 1;
 				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			}
 		}
@@ -8500,7 +8500,7 @@ unsigned char eof_set_active_difficulty(unsigned char diff)
 	{	//If the specified track difficulty is valid
 		eof_note_type = diff;	//Make it the active difficulty
 	}
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	return eof_note_type_max;
 }
 

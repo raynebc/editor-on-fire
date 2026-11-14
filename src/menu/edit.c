@@ -5342,7 +5342,7 @@ int eof_menu_edit_benchmark_rubberband(void)
 		eof_log("\tBenchmarking canceled.", 1);
 	}
 
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 
 	return 1;
 }

@@ -991,9 +991,10 @@ void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the notes in all track
 								///WARNING:  Any notes occurring after eof_chart_length will be deleted
 unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[], eof_dance_tab_name[] and eof_beatable_tab_name[]) with an asterisk
-	//eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
-	//eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
-	//eof_track_diff_highlighted_status[] and eof_track_diff_highlighted_tech_note_status[] are also updated
+	//If track is the active track, also updates the difficulty-specific status arrays for the active track:
+	//	eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
+	//	eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
+	//	eof_track_diff_highlighted_status[] and eof_track_diff_highlighted_tech_note_status[] are also updated
 	//Returns the number of difficulties present in the specified track (ie. if the highest used difficulty is 9, 10 is returned because the numbering begins with 0), or 0 is returned upon error or empty track
 	//If the specified track is also the active track, the program window title is redrawn to reflect the current populated status of the active track difficulty
 	//This function updates the technotes and pgnotes counters to ensure that if used after a deletion operation, those values are correct in the event that subsequent operations refer to them
@@ -1198,6 +1199,7 @@ void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long trac
 	//Sets the highlight status on all notes in the specified track that use any fret higher than the specified number, using eof_note_get_highest_fret() to check all normal and tech notes
 void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char function);
 	//Removes the highlight status on all notes (and tech notes if applicable) in the specified track
+	//If track is the active track, also clears the the difficulty-specific highlight status arrays (eof_track_diff_highlighted_status[] and eof_track_diff_highlighted_tech_note_status[] which would need to be rebuilt by eof_detect_difficulties() later)
 	//If function is 0, the permanent highlight flag (EOF_NOTE_FLAG_HIGHLIGHT) is removed from the notes
 	//If function is 1, the temporary highlight flag (EOF_NOTE_TFLAG_HIGHLIGHT) is removed from the notes
 	//If function is any other value, both highlight flags are removed from the notes

@@ -4052,7 +4052,7 @@ int eof_ghl_import_common(const char *fn)
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
 	eof_set_color_set();
-	eof_fix_window_title();
+	eof_window_title_dirty = 1;
 	eof_render();
 	eof_filebuffer_close(fb);	//Close the file buffer
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current since sections may have been added

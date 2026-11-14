@@ -565,7 +565,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename, unsigned long slicelen
 	stop = clock();
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWaveform generated in %f seconds", (double)(stop - start) / (double)CLOCKS_PER_SEC);
 	eof_log(eof_log_string, 1);
-	eof_fix_window_title();	//Restore the normal window title
+	eof_window_title_dirty = 1;
 
 	return waveform;	//Return waveform data
 }
