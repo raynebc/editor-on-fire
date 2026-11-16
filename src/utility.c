@@ -1709,7 +1709,7 @@ int eof_check_update(void)
 	{	//If a hotfix date was defined
 		running_date = eof_parse_mmddyyyy(hotfix);	//Parse the running hotfix date
 	}
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected running version:  %lu, date:  %lu", running_ver, running_date);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected running version:  %lu, hotfix date:  %lu", running_ver, running_date);
 	eof_log(eof_log_string, 1);
 
 	//Compare the latest online build information against the running build

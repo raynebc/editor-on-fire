@@ -777,7 +777,7 @@ long eof_track_fixup_next_note_applicable_to_diff(EOF_SONG *sp, unsigned long tr
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
 	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically
 	///Assumes notes are sorted
-	//Dynamic highlighting for the track's active note set is also updated
+	//Dynamic highlighting for the track's active note set is also updated.  If the specified track is the active track, eof_detect_difficulties() is also used to refresh the population/highlight status arrays
 void eof_sanitize_phrase_names(EOF_SONG *sp, unsigned long track);	//Empties the name string of any EOF_PHRASE_SECTION items in the track that have non-printable characters (ie. uninitialized data)
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option);
 	//Used during MIDI and GP imports to mark a note as "crazy" if it overlaps with the next note in the same difficulty
@@ -991,9 +991,9 @@ void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the notes in all track
 								///WARNING:  Any notes occurring after eof_chart_length will be deleted
 unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[], eof_dance_tab_name[] and eof_beatable_tab_name[]) with an asterisk
-	//If track is the active track, also updates the difficulty-specific status arrays for the active track:
-	//	eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
-	//	eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
+	//eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
+	//eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
+	//If track is the active track, also updates the difficulty-specific highlight status arrays for the active track (which are just used when rendering difficulty tabs):
 	//	eof_track_diff_highlighted_status[] and eof_track_diff_highlighted_tech_note_status[] are also updated
 	//Returns the number of difficulties present in the specified track (ie. if the highest used difficulty is 9, 10 is returned because the numbering begins with 0), or 0 is returned upon error or empty track
 	//If the specified track is also the active track, the program window title is redrawn to reflect the current populated status of the active track difficulty

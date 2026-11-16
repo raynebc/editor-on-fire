@@ -1308,12 +1308,12 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
  	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 
+	memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
+	memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
 	if(track == eof_selected_track)
 	{	//If the active track is being processed, rebuild these status arrays
-		memset(eof_track_diff_populated_status, 0, sizeof(eof_track_diff_populated_status));
 		memset(eof_track_diff_highlighted_status, 0, sizeof(eof_track_diff_highlighted_status));
 		memset(eof_track_diff_highlighted_tech_note_status, 0, sizeof(eof_track_diff_highlighted_tech_note_status));
-		memset(eof_track_diff_populated_tech_note_status, 0, sizeof(eof_track_diff_populated_tech_note_status));
 	}
 	eof_note_type_name[0][0] = ' ';
 	eof_note_type_name[1][0] = ' ';
@@ -1342,18 +1342,12 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 			if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
 			{
 				eof_vocal_tab_name[0][0] = '*';
-				if(track == eof_selected_track)
-				{	//If the active track is being processed
-					eof_track_diff_populated_status[0] = 1;
-				}
+				eof_track_diff_populated_status[0] = 1;
 			}
 		}
 		else
 		{
-			if(track == eof_selected_track)
-			{	//If the active track is being processed
-				eof_track_diff_populated_status[note_type] = 1;
-			}
+			eof_track_diff_populated_status[note_type] = 1;
 			if(note_type >= numdiffs)
 			{	//If this note's difficulty is the highest encountered in the track so far
 				numdiffs = note_type + 1;
@@ -1393,9 +1387,9 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	}
 	for(i = 0; i < tp->technotes; i++)
 	{
+		eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
 		if(track == eof_selected_track)
 		{	//If the active track is being processed
-			eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
 			if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || ((tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT) && sp->tags->highlight_unsnapped_notes))
 			{	//If the tech note has highlighting
 				eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
@@ -6431,7 +6425,8 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			eof_song_highlight_non_grid_snapped_notes(sp, track);	//Re-create the non grid snapped highlighting as appropriate
 		if(sp->tags->highlight_arpeggios)
 			eof_song_highlight_arpeggios(sp, track);	//Re-create the arpeggio highlighting as appropriate
-		(void) eof_detect_difficulties(sp, track);	//Update arrays for note set population and highlighting to reflect the specified track
+		if(track == eof_selected_track)
+			(void) eof_detect_difficulties(sp, track);		//Update arrays for note set population and highlighting to reflect the specified track if it happens to be the active track
 	}
 
 	eof_sanitize_phrase_names(sp, track);	//Empty any invalid names in the track's phrase items (ie. star power phrases)
