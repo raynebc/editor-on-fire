@@ -375,6 +375,10 @@ extern char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1];
 #define EOF_NOTE_AMAZING     3
 #define EOF_NOTE_SPECIAL     4
 #define EOF_NOTE_CHALLENGE   4
+#define EOF_NOTE_VOCALS  0
+#define EOF_NOTE_HARM1   1
+#define EOF_NOTE_HARM2   2
+#define EOF_NOTE_HARM3   3
 #define EOF_MAX_DIFFICULTIES 5
 	//Note: EOF_NOTE_SPECIAL references the same difficulty that the dance track uses for "Challenge" difficulty
 

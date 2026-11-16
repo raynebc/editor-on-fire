@@ -71,7 +71,7 @@
 
 char        eof_note_type_name_fof[EOF_MAX_DIFFICULTIES][10] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_note_type_name_rb[EOF_MAX_DIFFICULTIES][10] = {" Easy", " Medium", " Hard", " Expert", " BRE"};
-char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][10] = {" Lyrics", " ", " ", " ", " "};
+char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][10] = {" Lyrics", " HARM1", " HARM2", " HARM3", " "};
 char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][15] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
 char        eof_beatable_tab_name[EOF_MAX_DIFFICULTIES][15] = {" Easy", " Medium", " Hard", " Unbeatable", " "};
 char        (*eof_note_type_name)[10] = eof_note_type_name_rb;	//By default, use Rock Band difficulty names
@@ -355,7 +355,6 @@ int         eof_display_second_piano_roll = 0;		//If nonzero, a second piano rol
 unsigned    eof_note_type2 = 256;	//The difficulty to display in the secondary piano roll (having a value greater than the highest supported difficulty level of 255 means it will initialize to the current difficulty when it is enabled)
 unsigned    eof_selected_track2 = 0;	//The track to display in the secondary piano roll (0 means it will initialize to the current track when it is enabled)
 int         eof_vocals_selected = 0;	//Is set to nonzero if the active track is a vocal track
-unsigned    eof_vocals_tab = 0;
 int         eof_vocals_offset = 60; // Start at "middle C"
 int         eof_song_loaded = 0;	//The boolean condition that a chart and its audio are successfully loaded
 int         eof_last_note = 0;
@@ -409,7 +408,7 @@ int         eof_peg_x;
 int         eof_last_pen_pos = 0;
 int         eof_cursor_visible = 1;
 int         eof_pen_visible = 1;
-int         eof_hover_type = -1;
+int         eof_hover_type = -1;		//The difficulty tab the mouse is over
 int         eof_mouse_drug = 0;
 int         eof_paste_at_mouse = 0;
 int         eof_notes_moved = 0;
@@ -807,35 +806,45 @@ void eof_find_lyric_preview_lines(void)
 	unsigned long dist = 0;
 	int beyond = 1;
 	int adj_eof_music_pos = EOF_SEEK_POS;	//The current seek position of the chart, adjusted for AV delay
+	unsigned target_diff = eof_note_type;		//Which vocal part will be used to generate the lyric preview
+
+	eof_preview_line[0] = eof_preview_line[1] = -1;	//Clear the lyric preview lines
+	eof_preview_line_lyric[0] = eof_preview_line_lyric[1] = 0;
+	eof_preview_line_end_lyric[0] = eof_preview_line_end_lyric[1] = 0;
 
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
-	{
+	{	//For each defined lyric line
 		if((adj_eof_music_pos >= eof_song->vocal_track[0]->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos))
-		{
-			current_line = i;
+		{	//If the seek position is within this line
+			current_line = i;	//Track this
 			break;
 		}
 	}
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
-	{
+	{	//For each defined lyric line
 		if(adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos)
-		{
+		{	//If the seek position is at/before the line's end position
 			beyond = 0;
 			break;
 		}
 	}
 	if(beyond)
-	{
-		eof_preview_line[0] = -1;
-		eof_preview_line_lyric[0] = 0;
-		eof_preview_line_end_lyric[0] = 0;
+	{	//If the seek position is after all defined lyric lines
 		return;
 	}
+	if(eof_selected_track != EOF_TRACK_VOCALS)
+	{	//If the vocal tracks is not active
+		target_diff = eof_note_type_v;	//Use the last active vocal part to build lyric previews from
+	}
 	if(current_line >= 0)
-	{
+	{	//If the seek position is inside a lyric line
+		//Build first lyric preview line
 		eof_preview_line[0] = current_line;
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
-		{
+		{	//For each lyric
+			if(target_diff != eof_get_note_type(eof_song, eof_selected_track, i))
+				continue;	//If the lyric doesn't apply to the target vocal part, skip it
+
 			if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos))
 			{
 				eof_preview_line_lyric[0] = i;
@@ -850,6 +859,7 @@ void eof_find_lyric_preview_lines(void)
 				break;
 			}
 		}
+		//Look for second lyric preview line
 		for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 		{
 			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (!dist || (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist)))
@@ -860,9 +870,13 @@ void eof_find_lyric_preview_lines(void)
 		}
 		if(next_line >= 0)
 		{
+			//Build second lyric preview line
 			eof_preview_line[1] = next_line;
 			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
-			{
+			{	//For each lyric
+				if(target_diff != eof_get_note_type(eof_song, eof_selected_track, i))
+					continue;	//If the lyric doesn't apply to the target vocal part, skip it
+
 				if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos))
 				{
 					eof_preview_line_lyric[1] = i;
@@ -878,16 +892,6 @@ void eof_find_lyric_preview_lines(void)
 				}
 			}
 		}
-		else
-		{
-			eof_preview_line[1] = -1;
-			eof_preview_line_lyric[1] = 0;
-			eof_preview_line_end_lyric[1] = 0;
-		}
-	}
-	else
-	{
-		eof_preview_line[0] = -1;
 	}
 }
 
