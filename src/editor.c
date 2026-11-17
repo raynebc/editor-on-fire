@@ -6358,6 +6358,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	int n;
 	int ny;
 	int red = 0;
+	EOF_PHRASE_SECTION *ptr;
 
 	if(!eof_song_loaded || !eof_track_is_vocal_track(eof_song, eof_selected_track) || !window)
 		return;
@@ -6383,14 +6384,18 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	/* draw lyric lines */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
 	{ 	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
-		rectfill(window->screen, lpos + eof_song->vocal_track[tracknum]->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, lpos + eof_song->vocal_track[tracknum]->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track[tracknum]->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
+		ptr = &eof_song->vocal_track[tracknum]->line[i];	//Simplify
+		if(ptr->difficulty != eof_note_type)
+			continue;	//If this lyric line isn't specific to the active vocal part, skip it
+
+		rectfill(window->screen, lpos + ptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, lpos + ptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (ptr->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
 	}
 
 	start = eof_determine_piano_roll_left_edge();
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{	//For each lyric
 		if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i))
-			continue;	//If the lyric doesn't apply to the active difficulty, skip rendering it
+			continue;	//If the lyric doesn't apply to the active vocal part, skip rendering it
 
 		if(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length >= start)
 		{	//If the lyric would render at or after the left edge of the piano roll

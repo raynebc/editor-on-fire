@@ -799,45 +799,56 @@ int eof_byte_to_binary_string(unsigned char value, char *buffer)
 
 void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 {
-	unsigned long ctr, ctr2;
+	unsigned long ctr, ctr2, diff;
 	EOF_VOCAL_TRACK *tp;
 	char buffer[1024], buffer2[50] = {0}, error = 0, unsorted = 0;
-	unsigned long lastend = 0, lastlyricindex, matches;
+	unsigned long lastend, lastlyricindex, matches;
 
 	if(!sp)
 		return;
 
+	eof_log("eof_check_and_log_lyric_line_errors() entered", 3);
 	tp = sp->vocal_track[0];
-	for(ctr = 0; ctr < tp->lines; ctr++)
-	{	//For each lyric line
-		if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
-		{
-			error = 1;
-			break;
-		}
-		if(ctr && (tp->line[ctr].start_pos <= lastend))
-		{
-			error = 2;
-			break;
-		}
-		matches = lastlyricindex = 0;	//Reset these
-		for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
-		{	//For each lyric
-			if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
-			{	//If this lyric is within the scope of the lyric line
-				if(matches && (ctr2 > lastlyricindex + 1))
-				{
-					error = 4;
-					break;
-				}
-				matches++;	//Keep track of how many lyrics were found to be in this line
-				lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
+
+	for(diff = 0; diff < 4; diff++)
+	{	//For each of the four vocal parts
+		lastend = 0;
+		for(ctr = 0; ctr < tp->lines; ctr++)
+		{	//For each lyric line
+			if(tp->line[ctr].difficulty != diff)
+				continue;	//If this line isn't applicable to the vocal part being examined, skip it
+
+			if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
+			{
+				error = 1;
+				break;
 			}
-		}
-		lastend = tp->line[ctr].end_pos;
-		if(!matches)
-		{	//No lyrics were in this line
-			error = 5;
+			if(ctr && (tp->line[ctr].start_pos <= lastend))
+			{
+				error = 2;
+				break;
+			}
+			matches = lastlyricindex = 0;	//Reset these
+			for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
+			{	//For each lyric
+				if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
+				{	//If this lyric is within the scope of the lyric line
+					if(matches && (ctr2 > lastlyricindex + 1))
+					{
+						error = 4;
+						break;
+					}
+					matches++;	//Keep track of how many lyrics were found to be in this line
+					lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
+				}
+			}
+			lastend = tp->line[ctr].end_pos;
+			if(!matches)
+			{	//No lyrics were in this line
+				error = 5;
+			}
+			if(error)
+				break;
 		}
 		if(error)
 			break;
@@ -850,61 +861,67 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 		else
 			eof_log("\tLyric dump", 1);
 
-		for(ctr = 0; ctr < tp->lines;)
-		{	//For each lyric line
-			if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
-			{
-				eof_log("\t\t!Lyric line timings corrupt.  Repairing", 1);
+		for(diff = 0; diff < 4; diff++)
+		{	//For each of the four vocal parts
+			lastend = 0;
+			for(ctr = 0; ctr < tp->lines; ctr++)
+			{	//For each lyric line
+				if(tp->line[ctr].difficulty != diff)
+					continue;	//If this line isn't applicable to the vocal part being examined, skip it
+
 				if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
-					tp->line[ctr].end_pos++;		//If the start and end positions are the same, make the line 1ms longer to resolve the problem
-				else
-				{	//The line's start position is after the end position, swap those timings
-					unsigned long temp = tp->line[ctr].end_pos;
-					tp->line[ctr].end_pos = tp->line[ctr].start_pos;
-					tp->line[ctr].start_pos = temp;
-				}
-			}
-			if(ctr && (tp->line[ctr].start_pos <= lastend))
-			{
-				eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
-				tp->line[ctr].start_pos = lastend + 1;	//Make the lyric line begin 1ms after the end of the previous line
-			}
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  Diff %u, %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].difficulty, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
-			eof_log(eof_log_string, 1);
-			buffer[0] = '\0';	//Empty the buffer
-			matches = lastlyricindex = 0;	//Reset these
-			for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
-			{	//For each lyric
-				if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
-				{	//If this lyric is within the scope of the lyric line
-					if(matches && (ctr2 > lastlyricindex + 1))
-					{
-						eof_log("\t\t\t!Lyrics out of order.", 1);
-						unsorted = 1;
+				{
+					eof_log("\t\t!Lyric line timings corrupt.  Repairing", 1);
+					if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
+						tp->line[ctr].end_pos++;		//If the start and end positions are the same, make the line 1ms longer to resolve the problem
+					else
+					{	//The line's start position is after the end position, swap those timings
+						unsigned long temp = tp->line[ctr].end_pos;
+						tp->line[ctr].end_pos = tp->line[ctr].start_pos;
+						tp->line[ctr].start_pos = temp;
 					}
-					snprintf(buffer2, sizeof(buffer2) - 1, "%lu (%s) ", ctr2, tp->lyric[ctr2]->text);
-					eof_strncat(buffer, buffer2, sizeof(buffer));	//Append data about this lyric to the buffer
-					matches++;	//Keep track of how many lyrics were found to be in this line
-					lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
+				}
+				if(ctr && (tp->line[ctr].start_pos <= lastend))
+				{
+					eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
+					tp->line[ctr].start_pos = lastend + 1;	//Make the lyric line begin 1ms after the end of the previous line
+				}
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  Diff %u, %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].difficulty, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
+				eof_log(eof_log_string, 1);
+				buffer[0] = '\0';	//Empty the buffer
+				matches = lastlyricindex = 0;	//Reset these
+				for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
+				{	//For each lyric
+					if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
+					{	//If this lyric is within the scope of the lyric line
+						if(matches && (ctr2 > lastlyricindex + 1))
+						{
+							eof_log("\t\t\t!Lyrics out of order.", 1);
+							unsorted = 1;
+						}
+						snprintf(buffer2, sizeof(buffer2) - 1, "%lu (%s) ", ctr2, tp->lyric[ctr2]->text);
+						eof_strncat(buffer, buffer2, sizeof(buffer));	//Append data about this lyric to the buffer
+						matches++;	//Keep track of how many lyrics were found to be in this line
+						lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
+					}
+				}
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%s", buffer);
+				eof_log(eof_log_string, 1);
+
+				lastend = tp->line[ctr].end_pos;
+				if(!matches)
+				{	//No lyrics were in this line, do not increment ctr and instead process the next line which will now become line #ctr
+					eof_log("\t\t!Lyric line is empty.  Repairing", 1);
+					eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
 				}
 			}
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%s", buffer);
-			eof_log(eof_log_string, 1);
 
-			lastend = tp->line[ctr].end_pos;
-			if(!matches)
-			{	//No lyrics were in this line, do not increment ctr and instead process the next line which will now become line #ctr
-				eof_log("\t\t!Lyric line is empty.  Repairing", 1);
-				eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
+			if(unsorted)
+			{	//If the lyrics were out of chronological order
+				eof_log("\t\t\tRepairing.", 1);
+				eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
+				unsorted = 0;
 			}
-			else
-				ctr++;	//Process the next lyric line on the next loop
-		}
-
-		if(unsorted)
-		{	//If the lyrics were out of chronological order
-			eof_log("\t\t\tRepairing.", 1);
-			eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
 		}
 
 		if(error)

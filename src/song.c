@@ -62,7 +62,7 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_MIDI_TRACK_DEFINITIONS] =
 	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, 0, "PART GUITAR COOP", "", 0xFF, 5, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, 0, "PART RHYTHM", "", 0xFF, 5, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "PART DRUMS", "", 0xFF, 5, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART VOCALS", "", 0xFF, 5, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART VOCALS", "", EOF_NOTE_VOCALS, 5, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, 0, "PART KEYS", "", 0xFF, 5, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", "", 0xFF, 5, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", "", 0xFF, 5, 0},
@@ -82,12 +82,12 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_MIDI_TRACK_DEFINITIONS] =
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_H", "", EOF_NOTE_MEDIUM, 5, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_M", "", EOF_NOTE_EASY, 5, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_E", "", EOF_NOTE_SUPAEASY, 5, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_HARM, 0, "HARM1", "", 0xFF, 5, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_HARM, 0, "HARM2", "", 0xFF, 5, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_HARM, 0, "HARM3", "", 0xFF, 5, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_HARM, 0, "PART HARM1", "", 0xFF, 5, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_HARM, 0, "PART HARM2", "", 0xFF, 5, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_HARM, 0, "PART HARM3", "", 0xFF, 5, 0}
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM1", "", EOF_NOTE_HARM1, 5, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM2", "", EOF_NOTE_HARM2, 5, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM3", "", EOF_NOTE_HARM3, 5, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM1", "", EOF_NOTE_HARM1, 5, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM2", "", EOF_NOTE_HARM2, 5, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM3", "", EOF_NOTE_HARM3, 5, 0}
 };	//These entries describe tracks in the RB3 MIDI file format and their associated EOF track type macros, for use during import/export
 	//One complication here is that the pro keys charting gets one MIDI track for each difficulty
 	//Another is that the pro guitar could have a separate track for use with the Squier guitar (22 frets instead of 17)
@@ -1367,7 +1367,10 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 			if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
 			{
 				eof_vocal_tab_name[note_type][0] = '*';
-				eof_track_diff_populated_status[note_type] = 1;
+				if(note_type < 5)
+				{	//If a valid vocal part was identified for this lyric
+					eof_track_diff_populated_status[note_type] = 1;
+				}
 			}
 		}
 		else
@@ -4233,7 +4236,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						for(ctr=0; ctr < sp->vocal_track[tracknum]->lines; ctr++)
 						{	//For each lyric phrase in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0, fp);						//Write the associated difficulty (lyric set) (not supported yet, stored to file as 0, changed to 0xFF while in use in EOF to reflect being difficulty agnostic)
+							(void) pack_putc(sp->vocal_track[tracknum]->line[ctr].difficulty, fp);	//Write the associated difficulty (lyric set)
 							(void) pack_iputl(sp->vocal_track[tracknum]->line[ctr].start_pos, fp);	//Write the lyric phrase's position
 							(void) pack_iputl(sp->vocal_track[tracknum]->line[ctr].end_pos, fp);	//Write the lyric phrase's end position
 							(void) pack_iputl(sp->vocal_track[tracknum]->line[ctr].flags, fp);		//Write section flags
@@ -13070,6 +13073,8 @@ static unsigned long lyrics_in_beat(unsigned long beat)
 	{
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
+			if(eof_note_type_v != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, i))
+				continue;	//If the lyric doesn't apply to the active vocal part, skip it
 			if(eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->beat[beat]->pos)
 			{
 				count++;
@@ -13080,6 +13085,8 @@ static unsigned long lyrics_in_beat(unsigned long beat)
 	{
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
+			if(eof_note_type_v != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, i))
+				continue;	//If the lyric doesn't apply to the active vocal part, skip it
 			if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->beat[beat]->pos) && (eof_song->vocal_track[0]->lyric[i]->pos < eof_song->beat[beat + 1]->pos))
 			{
 				count++;

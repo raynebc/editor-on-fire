@@ -37,7 +37,7 @@ typedef struct
 	int type;		//The destination track to import to
 	int game	;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, 1 to indicate a Power Gig MIDI is being imported, 2 to indicate a Guitar Hero animation track is being imported or 3 to indicate an LLPLUS MIDI is being imported
 	int game2;	//Used to track a potential game format detection, since the presence of LLPLUS notes may be ambiguous unless no other mandatory criteria (such as Rock Band style track names) are encountered
-	unsigned char diff;	//Some tracks (such as the pro keys and Power Gig tracks) have all of their contents applicable to a single difficulty level
+	unsigned char diff;	//Some tracks (such as the pro keys, harmonies and Power Gig tracks) have all of their contents applicable to a single difficulty level
 	unsigned long tracknum;
 } EOF_IMPORT_MIDI_EVENT_LIST;
 
@@ -405,7 +405,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	long picked_track;
 	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};	//for Rock Band songs, we need to ignore certain tracks
 	unsigned char lane = 0;				//Used to track the lane referenced by a MIDI on/off note
-	char diff = -1;						//Used to track the difficulty referenced by a MIDI on/off note (-1 means difficulty undetermined)
+	char diff = -1;						//Used to track the difficulty or vocal part referenced by a MIDI on/off note (-1 means difficulty undetermined)
 	unsigned char lane_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};	//Maps each lane to a note bitmask value
 	unsigned long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	unsigned long first_note;
@@ -942,8 +942,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 								if(eof_import_events[i]->type > 0)
 									break;	//If the track name has been matched, skip the below processing
 
-								if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
-								{	//If this is a track name that contains the word "PART" in the name (or begins with "HARM")
+								if(ustrstr(text,"PART"))
+								{	//If this is a track name that wasn't recognized above but contains the word "PART" in the name
 									eof_clear_input();
 									if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
 									{	//If the user opts to import the raw track data
@@ -1523,6 +1523,8 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 			midinote = eof_import_events[i]->event[j]->d1;	//Simplify
 			if(eof_midi_tracks[picked_track].track_format == EOF_VOCAL_TRACK_FORMAT)
 			{	//If parsing a vocal track
+				diff = eof_import_events[i]->diff;	//Apply the vocal part number applicable to this track based on whether it's the main vocal track or a harmony track
+
 				/* note on */
 				if(eof_import_events[i]->event[j]->type == 0x90)
 				{
@@ -1531,12 +1533,14 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					{
 						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
 						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].difficulty = diff;	//Apply this lyric line to the appropriate vocal part
 						last_105 = sp->vocal_track[0]->lines;
 					}
 					else if(midinote == 106)
 					{
 						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
 						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].difficulty = diff;	//Apply this lyric line to the appropriate vocal part
 						last_106 = sp->vocal_track[0]->lines;
 					}
 					/* overdrive */
@@ -1549,8 +1553,11 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
 							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
-							{
-								break;
+							{	//If this note on event is at the same position as an existing lyric
+								if(sp->vocal_track[0]->lyric[k]->type == diff)
+								{	//If this note on event is in the same vocal part as that existing lyric
+									break;	//This is the lyric that corresponds with the note on event
+								}
 							}
 						}
 						/* no note associated with this lyric so create a new note */
@@ -1560,6 +1567,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->midi_pos = event_miditime;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
+							sp->vocal_track[0]->lyric[note_count[picked_track]]->type = diff;	//Apply this lyric to the appropriate vocal part
 							if(gridsnap)
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->tflags |= EOF_NOTE_TFLAG_RESNAP;	//Track that the lyric is expected to be grid snapped after MIDI import completes
 							note_count[picked_track]++;
@@ -1654,8 +1662,11 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
 							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
-							{
-								break;
+							{	//If this lyric note is at the same position
+								if(sp->vocal_track[0]->lyric[k]->type == diff)
+								{	//If this lyric note is in the same vocal part
+									break;	//This is the vocal note that corresponds with the lyric event
+								}
 							}
 						}
 						/* no note associated with this lyric so create a new note */
@@ -1680,6 +1691,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->midi_pos = event_miditime;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
+								sp->vocal_track[0]->lyric[note_count[picked_track]]->type = diff;	//Apply this lyric to the appropriate vocal part
 								if(!linetrack)
 								{	//If this is the first lyric in this line of lyrics
 									linestart = event_realtime;	//This is the starting position
@@ -3798,9 +3810,12 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		eof_track_resize(sp, picked_track, note_count[picked_track]);
 		if(eof_import_events[i]->game == 0)
 		{	//If this is not a Power Gig formatted MIDI, only allow one MIDI track to import into each track in the project
-			if(eof_get_track_size(sp, picked_track) > 0)
-			{	//If at least one note was imported
-				used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
+			if(picked_track != 6)
+			{	//If this isn't a vocal track (which can have contents defined by PART VOCALS and up to 3 harmony tracks
+				if(eof_get_track_size(sp, picked_track) > 0)
+				{	//If at least one note was imported
+					used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
+				}
 			}
 		}
 	}//For each imported track

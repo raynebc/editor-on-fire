@@ -310,8 +310,7 @@ typedef struct
 #define EOF_TRACK_DRUM_PS		13
 #define EOF_TRACK_PRO_GUITAR_B	14
 #define EOF_TRACK_PRO_KEYS		0
-#define EOF_TRACK_HARM          0
-	//Leave the harmonics and pro keys macro defined to 0 to ensure MIDI import knows they're not supported tracks
+	//Leave the pro keys macro defined to 0 to ensure MIDI import knows it's not a supported track type
 
 
 ///Section/phrase numbers
