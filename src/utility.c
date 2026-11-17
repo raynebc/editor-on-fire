@@ -820,11 +820,6 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			error = 2;
 			break;
 		}
-		if(tp->line[ctr].difficulty != 255)
-		{
-			error = 3;
-			break;
-		}
 		matches = lastlyricindex = 0;	//Reset these
 		for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
 		{	//For each lyric
@@ -873,11 +868,6 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			{
 				eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
 				tp->line[ctr].start_pos = lastend + 1;	//Make the lyric line begin 1ms after the end of the previous line
-			}
-			if(tp->line[ctr].difficulty != 255)
-			{
-				eof_log("\t\t!Lyric line is the wrong difficulty.  Repairing", 1);
-				tp->line[ctr].difficulty = 255;
 			}
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  Diff %u, %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].difficulty, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
 			eof_log(eof_log_string, 1);

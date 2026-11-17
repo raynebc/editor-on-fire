@@ -1345,8 +1345,24 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 
 void eof_cat_track_difficulty_string(char *str, unsigned long buffersize)
 {
+	char *ptr;
+
 	if(!str)
 		return;	//Invalid parameter
+
+	if(eof_vocals_selected)
+	{
+		if(eof_note_type == EOF_NOTE_VOCALS)
+			(void) ustrzcat(str, buffersize, " PART VOCALS");
+		else if(eof_note_type == EOF_NOTE_HARM1)
+			(void) ustrzcat(str, buffersize, " HARM1");
+		else if(eof_note_type == EOF_NOTE_HARM2)
+			(void) ustrzcat(str, buffersize, " HARM2");
+		else
+			(void) ustrzcat(str, buffersize, " HARM3");
+
+		return;
+	}
 
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
 	{	//If this track has an alternate name, append the track's alternate name
@@ -1356,34 +1372,31 @@ void eof_cat_track_difficulty_string(char *str, unsigned long buffersize)
 	{	//Otherwise append the track's native name
 		(void) ustrzcat(str, buffersize, eof_song->track[eof_selected_track]->name);
 	}
-	if(!eof_vocals_selected)
-	{	//If the vocal track isn't active, append other information such as the current difficulty
-		char *ptr;
 
-		(void) ustrzcat(str, buffersize, "  ");
-		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-		{	//If this track is not limited to 5 difficulties
-			char diff_string[15] = {0};			//Used to generate the string for a numbered difficulty
-			(void) snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %u", eof_note_type);
-			if(eof_track_diff_populated_status[eof_note_type])
-			{	//If this difficulty is populated
-				diff_string[0] = '*';
-			}
-			(void) ustrzcat(str, buffersize, diff_string);
+	//Append other information such as the current difficulty
+	(void) ustrzcat(str, buffersize, "  ");
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+	{	//If this track is not limited to 5 difficulties
+		char diff_string[15] = {0};			//Used to generate the string for a numbered difficulty
+		(void) snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %u", eof_note_type);
+		if(eof_track_diff_populated_status[eof_note_type])
+		{	//If this difficulty is populated
+			diff_string[0] = '*';
 		}
-		else if(eof_selected_track == EOF_TRACK_DANCE)
-		{	//If the dance track is active
-			ptr = eof_dance_tab_name[eof_note_type];
-			(void) ustrzcat(str, buffersize, ptr);					//Append the active dance difficulty name
-		}
+		(void) ustrzcat(str, buffersize, diff_string);
+	}
+	else if(eof_selected_track == EOF_TRACK_DANCE)
+	{	//If the dance track is active
+		ptr = eof_dance_tab_name[eof_note_type];
+		(void) ustrzcat(str, buffersize, ptr);					//Append the active dance difficulty name
+	}
+	else
+	{
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			ptr = eof_beatable_tab_name[eof_note_type];
 		else
-		{
-			if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
-				ptr = eof_beatable_tab_name[eof_note_type];
-			else
-				ptr = eof_note_type_name[eof_note_type];
-			(void) ustrzcat(str, buffersize, ptr);					//Append the active track difficulty name
-		}
+			ptr = eof_note_type_name[eof_note_type];
+		(void) ustrzcat(str, buffersize, ptr);					//Append the active track difficulty name
 	}
 
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
@@ -3555,6 +3568,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 	char *tempstring = NULL;			//The code to render in green needs special handling to suppress the / character
 	EOF_PHRASE_SECTION *linenum = NULL;	//Used to find the background color to render the lyric lines in (green for overdrive, otherwise transparent)
 	int bgcol1 = -1, bgcol2 = -1;
+	unsigned target_diff = eof_note_type;		//Which vocal part will be used to generate the lyric preview
 
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
 	unsigned long i, x;
@@ -3574,6 +3588,11 @@ void eof_render_lyric_preview(BITMAP * bp)
 		return;
 	}
 
+	if(eof_selected_track != EOF_TRACK_VOCALS)
+	{	//If the vocal tracks is not active
+		target_diff = eof_note_type_v;	//Use the last active vocal part to build lyric previews from
+	}
+
 //Build both lyric preview lines
 	for(x = 0; x < 2; x++)
 	{	//For each of the two lyric preview lines to build
@@ -3591,6 +3610,9 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
+			if(target_diff != eof_get_note_type(eof_song, eof_selected_track, i))
+				continue;	//If the lyric doesn't apply to the target vocal part, skip it
+
 			lyriclength = ustrlen(eof_song->vocal_track[0]->lyric[i]->text);	//This value will be used multiple times
 
 		//Perform grouping logic
@@ -5836,29 +5858,6 @@ void eof_init_after_load(char initaftersavestate)
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 
 	///Lyric line fixes
-	/* correct lyric line difficulties if necessary */
-	if(eof_song->vocal_track[0]->lines)
-	{	//If there are any lyric lines
-		int multiple_diffs = 0;	//Set to nonzero if any lyrics outside difficulty 0 are encountered
-		unsigned long ctr;
-
-		for(ctr = 0; ctr < eof_get_track_size(eof_song, EOF_TRACK_VOCALS); ctr++)
-		{
-			if(eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr) != 0)
-			{
-				multiple_diffs = 1;
-				break;
-			}
-		}
-		if(!multiple_diffs)
-		{	//If all defined lyrics were in difficulty 0
-			for(ctr = 0; ctr < eof_song->vocal_track[0]->lines; ctr++)
-			{	//For each lyric line
-				eof_song->vocal_track[0]->line[ctr].difficulty = 0xFF;	//Initialize the line's difficulty to 0xFF (all difficulties)
-			}
-		}
-	}
-
 	eof_sort_and_merge_overlapping_sections(eof_song->vocal_track[0]->line, &eof_song->vocal_track[0]->lines);	//Sort and remove overlapping lyric lines
 	eof_check_and_log_lyric_line_errors(eof_song, 0);
 	eof_reset_lyric_preview_lines();

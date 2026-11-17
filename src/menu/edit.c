@@ -50,6 +50,28 @@ MENU eof_edit_paste_from_menu_dance[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_edit_paste_from_menu_vocals[] =
+{
+	{"PART &VOCALS", eof_menu_edit_paste_from_supaeasy, NULL, 0, NULL},
+	{"HARM&1", eof_menu_edit_paste_from_easy, NULL, 0, NULL},
+	{"HARM&2", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
+	{"HARM&3", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Catalog\tShift+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_edit_paste_from_menu_beatable[] =
+{
+	{"&Easy", eof_menu_edit_paste_from_supaeasy, NULL, 0, NULL},
+	{"&Medium", eof_menu_edit_paste_from_easy, NULL, 0, NULL},
+	{"&Hard", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
+	{"&Unbeatable", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Catalog\tShift+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU * eof_active_edit_paste_from_menu;
 
 MENU eof_edit_snap_menu[] =
@@ -544,6 +566,16 @@ void eof_prepare_edit_menu(void)
 			eof_edit_menu[6].child = eof_edit_paste_from_menu_dance;
 			eof_active_edit_paste_from_menu = eof_edit_paste_from_menu_dance;
 		}
+		else if(eof_selected_track == EOF_TRACK_VOCALS)
+		{	//If this is the vocal track, insert the vocal specific paste from menu
+			eof_edit_menu[6].child = eof_edit_paste_from_menu_vocals;
+			eof_active_edit_paste_from_menu = eof_edit_paste_from_menu_vocals;
+		}
+		else if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+		{	//If this track is in BEATABLE mode, insert the BEATABLE specific paste from menu
+			eof_edit_menu[6].child = eof_edit_paste_from_menu_beatable;
+			eof_active_edit_paste_from_menu = eof_edit_paste_from_menu_beatable;
+		}
 		else
 		{	//Otherwise insert the generic paste from menu
 			eof_edit_menu[6].child = eof_edit_paste_from_menu;
@@ -572,8 +604,8 @@ void eof_prepare_edit_menu(void)
 			if((i == EOF_NOTE_CHALLENGE) && (eof_selected_track != EOF_TRACK_DANCE))
 				break;	//Don't check the BRE difficulty of non dance tracks
 
-			if((i != eof_note_type) && eof_track_diff_populated_status[i] && !eof_vocals_selected)
-			{		//If the difficulty is populated, isn't the active difficulty and PART VOCALS isn't active
+			if((i != eof_note_type) && eof_track_diff_populated_status[i])
+			{		//If the difficulty is populated and isn't the active difficulty
 				eof_active_edit_paste_from_menu[i].flags = 0;	//Enable paste from the difficulty
 			}
 			else
@@ -988,11 +1020,11 @@ int eof_menu_edit_paste_vocal_logic(int function)
 
 		if(!oldpaste)
 		{	//If new paste logic is being used, this lyric pastes into a position relative to the start and end of a beat marker
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, 0, temp_lyric.name);
+			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, eof_note_type, temp_lyric.name);
 		}
 		else
 		{	//If old paste logic is being used, this lyric pastes into a position relative to the previous pasted note
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, 0, temp_lyric.name);
+			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, eof_note_type, temp_lyric.name);
 		}
 		if(new_lyric)
 		{	//If the lyric was successfully created
@@ -1028,8 +1060,8 @@ int eof_menu_edit_paste_vocal_logic(int function)
 			}
 		}//If the lyric was successfully created
 	}//For each lyric in the clipboard file
-	if(source_id == eof_log_id)
-	{	//If the copy/paste is being performed within the same EOF instance
+	if((source_id == eof_log_id) && !eof_note_type)
+	{	//If the copy/paste is being performed within the same EOF instance, and the paste is being done into the main vocal part
 		if(lastlinenum != 0xFFFFFFFF)
 		{	//If a lyric line was in progress when the last of the lyrics were pasted, add the line now
 			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, lineflags, NULL);
@@ -4345,7 +4377,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 
 	//Copy notes from the source difficulty
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in this instrument track
+	{	//For each note in this track
 		if(eof_get_note_type(eof_song, eof_selected_track, i) == source_difficulty)
 		{	//If this note is in the source difficulty
 			pos = eof_get_note_pos(eof_song, eof_selected_track, i);
@@ -4359,7 +4391,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 		//Copy tech notes from the source difficulty
 		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 1);	//Enable tech view
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each note in this instrument track
+		{	//For each note in this track
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == source_difficulty)
 			{	//If this note is in the source difficulty
 				pos = eof_get_note_pos(eof_song, eof_selected_track, i);

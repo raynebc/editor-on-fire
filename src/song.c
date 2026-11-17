@@ -197,11 +197,21 @@ int eof_song_qsort_lyrics(const void * e1, const void * e2)
 	EOF_LYRIC ** thing1 = (EOF_LYRIC **)e1;
 	EOF_LYRIC ** thing2 = (EOF_LYRIC **)e2;
 
+	//Sort first by chronological order
 	if((*thing1)->pos < (*thing2)->pos)
 	{
 		return -1;
 	}
 	if((*thing1)->pos > (*thing2)->pos)
+	{
+		return 1;
+	}
+	//Sort second by difficulty
+	if((*thing1)->type < (*thing2)->type)
+	{
+		return -1;
+	}
+	if((*thing1)->type > (*thing2)->type)
 	{
 		return 1;
 	}
@@ -1043,25 +1053,37 @@ void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp)
 
 long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
 {
-	if(tp)
+	unsigned long i;
+
+	if(!tp || (lyric >= tp->lyrics))
+		return -1;	//Invalid parameters
+
+	for(i = lyric; i > 0; i--)
 	{
-		if(lyric > 0)
+		if(tp->lyric[i - 1]->type == tp->lyric[lyric]->type)
 		{
-			return lyric - 1;
+			return i - 1;
 		}
 	}
+
 	return -1;
 }
 
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
 {
-	if(tp)
+	unsigned long i;
+
+	if(!tp || (lyric >= tp->lyrics))
+		return -1;	//Invalid parameters
+
+	for(i = lyric + 1; i < tp->lyrics; i++)
 	{
-		if(lyric + 1 < tp->lyrics)
+		if(tp->lyric[i]->type == tp->lyric[lyric]->type)
 		{
-			return lyric + 1;
+			return i;
 		}
 	}
+
 	return -1;
 }
 
@@ -1321,6 +1343,9 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	eof_note_type_name[3][0] = ' ';
 	eof_note_type_name[4][0] = ' ';
 	eof_vocal_tab_name[0][0] = ' ';
+	eof_vocal_tab_name[1][0] = ' ';
+	eof_vocal_tab_name[2][0] = ' ';
+	eof_vocal_tab_name[3][0] = ' ';
 	eof_dance_tab_name[0][0] = ' ';
 	eof_dance_tab_name[1][0] = ' ';
 	eof_dance_tab_name[2][0] = ' ';
@@ -1341,8 +1366,8 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 		{
 			if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
 			{
-				eof_vocal_tab_name[0][0] = '*';
-				eof_track_diff_populated_status[0] = 1;
+				eof_vocal_tab_name[note_type][0] = '*';
+				eof_track_diff_populated_status[note_type] = 1;
 			}
 		}
 		else
@@ -2322,7 +2347,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				{	//For each lyric in this track
 					EOF_LYRIC *ptr = sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr];	//Simplify
 					(void) eof_load_song_string_pf(ptr->text,fp,EOF_MAX_LYRIC_LENGTH);	//Read the lyric text
-					(void) pack_getc(fp);			//Read lyric set number (not supported yet)
+					ptr->type = pack_getc(fp);		//Read lyric set number
 					ptr->note = pack_getc(fp);		//Read lyric pitch
 					ptr->pos = pack_igetl(fp);		//Read lyric position
 					ptr->length = pack_igetl(fp);		//Read lyric length
@@ -4189,7 +4214,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					for(ctr=0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
 					{	//For each lyric in this track
 						(void) eof_save_song_string_pf(sp->vocal_track[tracknum]->lyric[ctr]->text, fp);	//Write the lyric string
-						(void) pack_putc(0, fp);	//Write lyric set number (not supported yet)
+						(void) pack_putc(sp->vocal_track[tracknum]->lyric[ctr]->type, fp);		//Write lyric set number
 						(void) pack_putc(sp->vocal_track[tracknum]->lyric[ctr]->note, fp);		//Write the lyric pitch
 						(void) pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->pos, fp);		//Write the lyric position
 						(void) pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->length, fp);		//Write the lyric length

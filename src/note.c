@@ -1028,6 +1028,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 {
 	EOF_LYRIC *nextnp=NULL;	//Used to find the would-be X coordinate of the next lyric in the lyric lane
 	unsigned long notenum = 0;
+	long next;
 	char notpen = 0;	//Is set to nonzero if the passed lyric is determined to already be defined
 	long position;	//This is the position for the specified window's piano roll and is based on the passed window pointer
 	long leftcoord;	//This is the position of the left end of the piano roll
@@ -1086,9 +1087,10 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 				bgcol=makecol(0, 0, 127);	//Make dark blue the text's background color
 		}
 
-		if(notenum < eof_song->vocal_track[0]->lyrics-1)		//If there is another lyric
-		{							//Find its would-be X coordinate (use as X2 for clipping rect)
-			nextnp=eof_song->vocal_track[0]->lyric[notenum+1];
+		next = eof_fixup_next_lyric(eof_song->vocal_track[0], notenum);
+		if(next >= 0)
+		{	//If there was a next lyric, find its would-be X coordinate (use as X2 for clipping rect)
+			nextnp = eof_song->vocal_track[0]->lyric[next];
 			if(pos < leftcoord)
 				X2 = 20 + (nextnp->pos) / eof_zoom;
 			else

@@ -6390,7 +6390,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{	//For each lyric
 		if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i))
-					continue;	//If the lyric doesn't apply to the active difficulty, skip rendering it
+			continue;	//If the lyric doesn't apply to the active difficulty, skip rendering it
 
 		if(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length >= start)
 		{	//If the lyric would render at or after the left edge of the piano roll
