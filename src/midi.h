@@ -89,6 +89,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//If format is 2, a GH3 variation of the normal MIDI is exported where the forced HOPO marker (5 higher than the MIDI note for lane 1)
 	//  is written with a length of 0 delta ticks.  All other features are exported identically to the normal MIDI
 
+int eof_build_vocal_midi_track(EOF_SONG *sp, unsigned long track, unsigned char type, char fixvoxpitches, char fixvoxphrases, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, char *filename);
+	//The vocal track writing logic split out from eof_export_midi()
+	//For the specified vocal set of the specified track, writes the raw MIDI track data to the specified filename, to be merged into a MIDI file by the calling function
+	//The track name used is based on the specified vocal set (0 = "PART VOCALS", 1 = "HARM1", 2 = "HARM2", 3 = "HARM3")
+	//If fixvoxpitches is nonzero, any lyric that has a pitch of 0 (undefined) will be written with a generic pitch and a freestyle # marker
+	//If fixvoxphrases is nonzero, any lyric that is not within a lyric phrase will have a phrase written to contain it
+	//anchorlist and tslist are built accordingly by the calling function and passed to this one
+	//Returns nonzero on success, 0 on failure
+
 unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches, int function);
 	//Returns a bitmask defining which elements in the pitches array are populated to define the pitches used by the specified note/lyric
 	//This takes any defined capo placement into account in the case of pro guitar notes

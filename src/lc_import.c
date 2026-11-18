@@ -416,6 +416,9 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 	lastlyrtime = 0;	//First lyric is expected to be greater than or equal to this timestamp
 	for(linectr = 0; linectr < (unsigned long)tp->lines; linectr++)
 	{	//For each line of lyrics in the EOF structure
+		if(tp->line[linectr].difficulty != 0)
+			continue;	//If this lyric line isn't in the main vocal set, skip it
+
 		linestart = (tp->line[linectr]).start_pos;
 		lineend = (tp->line[linectr]).end_pos;
 
@@ -435,6 +438,12 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 
 		while(lyrctr < tp->lyrics)
 		{	//For each lyric
+			if(tp->lyric[lyrctr]->type != 0)
+			{	//If this lyric isn't in the main vocal set
+				lyrctr++;		//Advance to next lyric
+				continue;
+			}
+
 			thislyrtime = tp->lyric[lyrctr]->pos;
 			if((tp->lyric[lyrctr])->text[0] != '\0')
 			{	//If this lyric's text isn't an empty string

@@ -1617,11 +1617,11 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					else if((midinote == 96) || (midinote == 97))
 					{
 					}
-					else if((midinote >= EOF_LYRIC_PITCH_MIN) && (midinote <= EOF_LYRIC_PITCH_MAX))
-					{
+					else if(!midinote || ((midinote >= EOF_LYRIC_PITCH_MIN) && (midinote <= EOF_LYRIC_PITCH_MAX)))
+					{	//If this MIDI note is in the usable range of pitches, or is pitchless (pitch 0)
 						if(note_count[picked_track] > 0)
 						{
-							sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->length = event_realtime - sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->pos;
+							sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->length = event_realtime - sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->pos;	//Correct the length of this imported lyric
 						}
 					}
 				}
@@ -3826,10 +3826,13 @@ eof_log("\tThird pass complete", 1);
 
 	/* delete empty lyric lines */
 	for(i = sp->vocal_track[0]->lines; i > 0; i--)
-	{
+	{	//For each lyric line
 		lc = 0;
 		for(j = 0; j < sp->vocal_track[0]->lyrics; j++)
-		{
+		{	//For each lyric
+			if(sp->vocal_track[0]->line[i-1].difficulty != sp->vocal_track[0]->lyric[j]->type)
+				continue;	//If this lyric isn't in the same vocal set as the lyric line, skip it
+
 			if((sp->vocal_track[0]->lyric[j]->pos >= sp->vocal_track[0]->line[i-1].start_pos) && (sp->vocal_track[0]->lyric[j]->pos <= sp->vocal_track[0]->line[i-1].end_pos))
 			{
 				lc++;

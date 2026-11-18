@@ -1087,7 +1087,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 				bgcol=makecol(0, 0, 127);	//Make dark blue the text's background color
 		}
 
-		next = eof_fixup_next_lyric(eof_song->vocal_track[0], notenum);
+		next = eof_fixup_next_lyric(eof_song->vocal_track[0], notenum);	//Find the next lyric in this vocal set
 		if(next >= 0)
 		{	//If there was a next lyric, find its would-be X coordinate (use as X2 for clipping rect)
 			nextnp = eof_song->vocal_track[0]->lyric[next];
@@ -1100,9 +1100,9 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 
 //Determine if the entire note would clip left of the viewable area.  If so, return without attempting to render
 	endpos = np->pos + np->length;	//The normal end of the lyric is based on its rectangle
-	if(notpen && (notenum + 1 < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lyric[notenum + 1]->text[0] == '+'))
-	{	//If there is another lyric and it is a pitch shift
-		endpos = eof_song->vocal_track[0]->lyric[notenum + 1]->pos;
+	if(notpen && nextnp && (nextnp->text[0] == '+'))
+	{	//If there is another lyric in this vocal set and it is a pitch shift
+		endpos = nextnp->pos;
 	}
 	//Map the timestamp to a screen coordinate
 	if(pos < leftcoord)
@@ -1161,7 +1161,6 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 		if(np->note != EOF_LYRIC_PERCUSSION)
 		{
 			int sliderect[8] = {0};	//An array of 4 vertices, used to draw a diagonal rectangle
-			EOF_LYRIC *np2=NULL;	//Stores a pointer to the next lyric
 			long nplace2 = 0;
 			long native2 = 0;
 			long note_y2 = 0;	//Used to store the y coordinate of the next lyric
@@ -1169,11 +1168,10 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 
 			rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
 
-			if(notpen && (notenum + 1 < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lyric[notenum + 1]->text[0] == '+'))
-			{	//If there's another lyric, and it begins with a plus sign, it's a pitch shift, draw a vocal slide polygon
+			if(notpen && nextnp && (nextnp->text[0] == '+'))
+			{	//If there's another lyric in this vocal set, and it begins with a plus sign, it's a pitch shift, draw a vocal slide polygon
 				long leftcoord2;
 
-				np2=eof_song->vocal_track[0]->lyric[notenum+1];
 				sliderect[0]=npos + np->length / eof_zoom;	//X1 (X coordinate of the end of this lyric's rectangle)
 				sliderect[1]=note_y;						//Y1 (Y coordinate of the bottom of this lyric's rectangle)
 				if(window == eof_window_info)
@@ -1187,15 +1185,15 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 
 				if(pos < 300)
 				{
-					npos2 = 20 + (np2->pos) / eof_zoom;
+					npos2 = 20 + (nextnp->pos) / eof_zoom;
 				}
 				else
 				{
-					npos2 = 20 - ((pos - leftcoord2)) + np2->pos / eof_zoom;
+					npos2 = 20 - ((pos - leftcoord2)) + nextnp->pos / eof_zoom;
 				}
 				sliderect[2]=npos2;	//X2 (X coordinate of next lyric's rectangle)
 
-				nplace2 = np2->note - eof_vocals_offset;
+				nplace2 = nextnp->note - eof_vocals_offset;
 				if(nplace2 < 0)
 				{
 					native2 = -1;
@@ -2180,6 +2178,9 @@ EOF_PHRASE_SECTION *eof_find_lyric_line(unsigned long lyricnum)
 
 	for(linectr=0;linectr<eof_song->vocal_track[0]->lines;linectr++)
 	{
+		if(eof_song->vocal_track[0]->line[linectr].difficulty != eof_song->vocal_track[0]->lyric[lyricnum]->type)
+			continue;	//If this lyric line isn't in the same difficulty as the specified lyric, skip it
+
 		if((eof_song->vocal_track[0]->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track[0]->line[linectr].end_pos >= lyricpos))
 			return &(eof_song->vocal_track[0]->line[linectr]);	//Line found, return it
 	}

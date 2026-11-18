@@ -1366,9 +1366,9 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 		{
 			if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
 			{
-				eof_vocal_tab_name[note_type][0] = '*';
 				if(note_type < 5)
 				{	//If a valid vocal part was identified for this lyric
+					eof_vocal_tab_name[note_type][0] = '*';
 					eof_track_diff_populated_status[note_type] = 1;
 				}
 			}

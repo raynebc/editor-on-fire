@@ -31,6 +31,7 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 	//during Vrhythm export, or the name to call the exported track (for MIDI based lyric exports)
 	//	string2 may be NULL for SKAR export, as the track to import is pre-determined
 	//	string2 may be NULL for MIDI export, as "PART VOCALS" will be assumed by default
+	//Only the main vocal set (difficulty 0) is populated
 	//For export formats besides Vrhythm or other MIDI formats, string2 may be NULL
 	//Returns 1 on success, -1 on error and 0 if no lyrics were found in the structure
 
