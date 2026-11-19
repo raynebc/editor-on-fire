@@ -181,6 +181,7 @@ void eof_feedback_input_mode_update_selected_beat(void);
 
 unsigned char eof_set_active_difficulty(unsigned char diff);
 	//Changes the active difficulty of the active track, if the given difficulty is valid
+	//Also performs various related items such as updating eof_note_type_i, eof_note_type_v, updating sound cues, marking window title as dirty, detecting populated difficulties
 	//Returns the maximum number of difficulty levels supported by the active track
 
 void eof_constrain_mouse(void);

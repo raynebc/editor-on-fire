@@ -42,12 +42,12 @@ char eof_notes_macro_note_exceeding_fret[50];
 char eof_notes_macro_note_exceeding_diff[50];
 char eof_notes_macro_slide_exceeding_fret[50];
 char eof_notes_macro_tech_note_missing_target[50];
-char eof_notes_macro_lyric_extending_outside_line[50];
 char eof_notes_macro_technique_missing_sustain[50];
 char eof_notes_macro_note_name_maj_conflict[50];
 char eof_notes_macro_finger_violations[50];
 char eof_notes_macro_finger_violations_reason[60];
 char eof_notes_macro_lyric_with_non_ascii[50];
+char eof_notes_macro_lyric_extending_outside_line[50];
 char eof_notes_macro_lyric_outside_line[50];
 char eof_notes_macro_lyric_line_beginning_with_lowercase[50];
 char eof_notes_macro_lyric_line_exceeding_length[50];
@@ -3131,6 +3131,9 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	EOF_RS_TECHNIQUES tech = {0};
 	char time_string[15] = {0};
+	EOF_LYRIC *lyricptr;
+	EOF_PHRASE_SECTION *lineptr;
+	char voxtracknames[4][9] = {"", "HARM1: ", "HARM2: ", "HARM3: "};	//The vocal set to cite for lyric problems
 
 	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
@@ -4080,11 +4083,17 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		eof_notes_macro_lyric_outside_line[0] = '\0';	//Erase this string
 		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
 		{	//For each lyric
-			if((eof_song->vocal_track[0]->lyric[ctr]->note == EOF_LYRIC_PERCUSSION) || (eof_find_lyric_line(ctr) != NULL))
+			lyricptr = eof_song->vocal_track[0]->lyric[ctr];
+			if(lyricptr->type == 3)
+				continue;	//If this lyric is in HARM3, skip it (this harmony part is not supposed to define lyric lines)
+			if(eof_rocksmith_focus && lyricptr->type)
+				continue;	//If Rocksmith focus is enabled and this lyric is in a harmony track, ignore it
+			if((lyricptr->note == EOF_LYRIC_PERCUSSION) || (eof_find_lyric_line(ctr) != NULL))
 				continue;	//If this lyric is vocal percussion or is within a line, skip it
 
-			eof_notes_panel_print_time(eof_song->vocal_track[0]->lyric[ctr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
-			snprintf(eof_notes_macro_lyric_outside_line, sizeof(eof_notes_macro_lyric_outside_line) - 1, "%s - pos %s", eof_song->track[EOF_TRACK_VOCALS]->name, time_string);	//Write a string identifying the offending note
+			diff = (lyricptr->type <= 3) ? lyricptr->type : 0;
+			eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
+			snprintf(eof_notes_macro_lyric_outside_line, sizeof(eof_notes_macro_lyric_outside_line) - 1, "%spos %s", voxtracknames[diff], time_string);	//Write a string identifying the offending note
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -4176,10 +4185,14 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		eof_notes_macro_lyric_with_non_ascii[0] = '\0';	//Erase this string
 		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
 		{	//For each lyric
-			if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
+			lyricptr = eof_song->vocal_track[0]->lyric[ctr];
+			if(eof_rocksmith_focus && lyricptr->type)
+				continue;	//If Rocksmith focus is enabled and this lyric is in a harmony track, ignore it
+			if((lyricptr->text[0] != '\0') && (eof_string_has_non_ascii(lyricptr->text)))
 			{	//If any of the lyrics that contain text have non ASCII characters
-				eof_notes_panel_print_time(eof_song->vocal_track[0]->lyric[ctr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
-				snprintf(eof_notes_macro_lyric_with_non_ascii, sizeof(eof_notes_macro_lyric_with_non_ascii) - 1, "%s - pos %s", eof_song->track[EOF_TRACK_VOCALS]->name, time_string);	//Write a string identifying the offending note
+				diff = (lyricptr->type <= 3) ? lyricptr->type : 0;
+				eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
+				snprintf(eof_notes_macro_lyric_with_non_ascii, sizeof(eof_notes_macro_lyric_with_non_ascii) - 1, "%s%s - pos %s", voxtracknames[diff], eof_song->track[EOF_TRACK_VOCALS]->name, time_string);	//Write a string identifying the offending note
 				dest_buffer[0] = '\0';
 				return 3;	//True
 			}
@@ -5429,16 +5442,19 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		eof_notes_macro_lyric_extending_outside_line[0] = '\0';	//Erase this string
 		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
 		{	//For each lyric
-			EOF_LYRIC *lyric = eof_song->vocal_track[0]->lyric[ctr];	//Simplify
-			if(lyric->note != EOF_LYRIC_PERCUSSION)
+			lyricptr = eof_song->vocal_track[0]->lyric[ctr];	//Simplify
+			if(eof_rocksmith_focus && lyricptr->type)
+				continue;	//If Rocksmith focus is enabled and this lyric is in a harmony track, ignore it
+			if(lyricptr->note != EOF_LYRIC_PERCUSSION)
 			{	//If this is not a vocal percussion note
-				EOF_PHRASE_SECTION *lyricline = eof_find_lyric_line(ctr);
-				if(lyricline)
+				lineptr = eof_find_lyric_line(ctr);
+				if(lineptr)
 				{	//If this lyric begins within a lyric line
-					if(lyric->pos + lyric->length > lyricline->end_pos)
+					if(lyricptr->pos + lyricptr->length > lineptr->end_pos)
 					{	//If this lyric extends beyond the end of the lyric line it begins in
-						eof_notes_panel_print_time(lyric->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
-						snprintf(eof_notes_macro_lyric_extending_outside_line, sizeof(eof_notes_macro_lyric_extending_outside_line) - 1, "pos %s : \"%s\"", time_string, lyric->text);	//Write a string identifying the offending lyric
+						diff = (lyricptr->type <= 3) ? lyricptr->type : 0;
+						eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
+						snprintf(eof_notes_macro_lyric_extending_outside_line, sizeof(eof_notes_macro_lyric_extending_outside_line) - 1, "%spos %s : \"%s\"", voxtracknames[diff], time_string, lyricptr->text);	//Write a string identifying the offending lyric
 						dest_buffer[0] = '\0';
 						return 3;	//True
 					}
@@ -5708,16 +5724,22 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		eof_notes_macro_lyric_line_beginning_with_lowercase[0] = '\0';	//Erase this string
 		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lines); ctr++)
 		{	//For each lyric line
-			EOF_PHRASE_SECTION *lineptr = &eof_song->vocal_track[0]->line[ctr];
+			lineptr = &eof_song->vocal_track[0]->line[ctr];
+			if(eof_rocksmith_focus && lineptr->difficulty)
+				continue;	//If Rocksmith focus is enabled and this lyric line is in a harmony track, ignore it
 			for(ctr2 = 0; ctr2 < eof_song->vocal_track[0]->lyrics; ctr2++)
 			{	//For each lyric
-				EOF_LYRIC *lyricptr = eof_song->vocal_track[0]->lyric[ctr2];
+				lyricptr = eof_song->vocal_track[0]->lyric[ctr2];
+				if(lyricptr->type != lineptr->difficulty)
+					continue;	//If this lyric isn't in the same difficulty as the line being examined, skip it
+
 				if((lyricptr->pos >= lineptr->start_pos) && (lyricptr->pos <= lineptr->end_pos))
 				{	//If this is the first lyric found to be in the lyric line
 					if(islower(lyricptr->text[0]))
 					{	//If the first character in the lyric's text is a lowercase letter
+						diff = (lyricptr->type <= 3) ? lyricptr->type : 0;
 						eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
-						snprintf(eof_notes_macro_lyric_line_beginning_with_lowercase, sizeof(eof_notes_macro_lyric_line_beginning_with_lowercase) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
+						snprintf(eof_notes_macro_lyric_line_beginning_with_lowercase, sizeof(eof_notes_macro_lyric_line_beginning_with_lowercase) - 1, "%spos %s : \"%s\"", voxtracknames[diff], time_string, lyricptr->text);	//Write a string identifying the offending lyric
 						dest_buffer[0] = '\0';
 						return 3;	//True
 					}
@@ -5739,10 +5761,15 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 			for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lines); ctr++)
 			{	//For each lyric line
 				length = 0;
-				EOF_PHRASE_SECTION *lineptr = &eof_song->vocal_track[0]->line[ctr];
+				lineptr = &eof_song->vocal_track[0]->line[ctr];
+				if(eof_rocksmith_focus && lineptr->difficulty)
+					continue;	//If Rocksmith focus is enabled and this lyric line is in a harmony track, ignore it
+
 				for(ctr2 = 0; ctr2 < eof_song->vocal_track[0]->lyrics; ctr2++)
 				{	//For each lyric
-					EOF_LYRIC *lyricptr = eof_song->vocal_track[0]->lyric[ctr2];
+					lyricptr = eof_song->vocal_track[0]->lyric[ctr2];
+					if(lyricptr->type != lineptr->difficulty)
+						continue;	//If this lyric isn't in the same difficulty as the line being examined, skip it
 					if(lyricptr->pos > lineptr->end_pos)
 						break;	//If this and all remaining lyrics are after the end of the lyric line, stop checking lyrics for this line
 
@@ -5759,8 +5786,9 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 						}
 						if(length > threshold_length)
 						{
+							diff = (lyricptr->type <= 3) ? lyricptr->type : 0;
 							eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
-							snprintf(eof_notes_macro_lyric_line_exceeding_length, sizeof(eof_notes_macro_lyric_line_exceeding_length) - 1, "pos %s : \"...%s...\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric at the point where the limit is exceeded
+							snprintf(eof_notes_macro_lyric_line_exceeding_length, sizeof(eof_notes_macro_lyric_line_exceeding_length) - 1, "%spos %s : \"...%s...\"", voxtracknames[diff], time_string, lyricptr->text);	//Write a string identifying the offending lyric at the point where the limit is exceeded
 							dest_buffer[0] = '\0';
 							return 3;	//True
 						}
@@ -5795,8 +5823,9 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		{	//If the character list was successfully parsed
 			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
 			{	//For each lyric
-				EOF_LYRIC *lyricptr = eof_song->vocal_track[0]->lyric[ctr];
-
+				lyricptr = eof_song->vocal_track[0]->lyric[ctr];
+				if(eof_rocksmith_focus && lyricptr->type)
+					continue;	//If Rocksmith focus is enabled and this lyric is in a harmony track, ignore it
 				for(ctr2 = 0; lyricptr->text[ctr2] != '\0'; ctr2++)
 				{	//For each character in the lyric
 					approved = 0;
@@ -5823,8 +5852,9 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 
 				if(disqualified)
 				{
+					diff = (lyricptr->type <= 3) ? lyricptr->type : 0;
 					eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
-					snprintf(eof_notes_macro_lyric_line_contains_unwanted_punct, sizeof(eof_notes_macro_lyric_line_contains_unwanted_punct) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
+					snprintf(eof_notes_macro_lyric_line_contains_unwanted_punct, sizeof(eof_notes_macro_lyric_line_contains_unwanted_punct) - 1, "%spos %s : \"%s\"", voxtracknames[diff], time_string, lyricptr->text);	//Write a string identifying the offending lyric
 					dest_buffer[0] = '\0';
 					return 3;	//True
 				}

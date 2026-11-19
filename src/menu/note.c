@@ -107,6 +107,15 @@ MENU eof_menu_delete[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_menu_lyric_line_copy_menu[EOF_TRACKS_MAX] =
+{
+	{"PART &VOCALS", eof_menu_copy_lyric_lines_set_0, NULL, D_SELECTED, NULL},
+	{"HARM&1", eof_menu_copy_lyric_lines_set_1, NULL, 0, NULL},
+	{"HARM&2", eof_menu_copy_lyric_lines_set_2, NULL, 0, NULL},
+	{"HARM&3", eof_menu_copy_lyric_lines_set_3, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_lyric_line_menu[] =
 {
 	{eof_lyric_line_menu_mark_text, eof_menu_lyric_line_mark, NULL, 0, NULL},
@@ -115,6 +124,7 @@ MENU eof_lyric_line_menu[] =
 	{"Edit &Timing", eof_menu_note_lyric_line_edit_timing, NULL, 0, NULL},
 	{"Split &After selected", eof_menu_note_split_lyric_line_after_selected, NULL, 0, NULL},
 	{"Re&Pair timing", eof_menu_note_lyric_line_repair_timing, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_lyric_line_copy_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Toggle &Overdrive\t" CTRL_NAME "+,", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -1065,6 +1075,24 @@ void eof_prepare_note_menu(void)
 						llp = j;
 					}
 				}
+
+				/* lyric lines copy from */
+				eof_menu_lyric_line_copy_menu[0].flags = eof_menu_lyric_line_copy_menu[1].flags = eof_menu_lyric_line_copy_menu[2].flags = D_DISABLED;	//Disable these until they're found to contain lyric lines
+				for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
+				{	//For each lyric line
+					unsigned diff = eof_song->vocal_track[tracknum]->line[j].difficulty;
+					if(diff < 3)
+						eof_menu_lyric_line_copy_menu[diff].flags = 0;	//Enable this as as a source vocal set
+				}
+				if(eof_note_type_v > 3)
+					eof_note_type_v = 3;	//Bounds check
+				if(eof_note_type_v == 3)
+					eof_lyric_line_menu[6].flags = D_DISABLED;						//Note>Lyrics>Lyric Lines>Copy From> (HARM3 can't have lyric lines)
+				else
+					eof_lyric_line_menu[6].flags = 0;
+
+				eof_menu_lyric_line_copy_menu[eof_note_type_v].flags = D_DISABLED;	//Note>Lyrics>Lyric Lines>Copy From>(Can't copy lyric lines from the current vocal set into itself)
+				eof_menu_lyric_line_copy_menu[3].flags = D_DISABLED;				//Note>Lyrics>Lyric Lines>Copy From>HARM3
 			}
 			else
 			{	//PART VOCALS NOT SELECTED
@@ -1299,13 +1327,13 @@ void eof_prepare_note_menu(void)
 			eof_menu_solo_copy_menu[4].flags = eof_menu_solo_copy_menu[12].flags = D_DISABLED;	//Don't allow copying solos from one to the other
 		}
 
-		/* lyric line */
+		/* lyric lines */
 		if(inll)
 		{
 			eof_lyric_line_menu[1].flags = 0;	//Note>Lyrics>Lyric Lines>Remove
 			eof_lyric_line_menu[3].flags = 0;	//Note>Lyrics>Lyric Lines>Edit timing
 			eof_lyric_line_menu[4].flags = 0;	//Note>Lyrics>Lyric Lines>Split after selected
-			eof_lyric_line_menu[7].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
+			eof_lyric_line_menu[8].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
 			(void) ustrzcpy(eof_lyric_line_menu_mark_text, sizeof(eof_lyric_line_menu_mark_text), "Re-&Mark\t" CTRL_NAME "+M/X");
 		}
 		else
@@ -1313,7 +1341,7 @@ void eof_prepare_note_menu(void)
 			eof_lyric_line_menu[1].flags = D_DISABLED;
 			eof_lyric_line_menu[3].flags = D_DISABLED;
 			eof_lyric_line_menu[4].flags = D_DISABLED;
-			eof_lyric_line_menu[7].flags = D_DISABLED;
+			eof_lyric_line_menu[8].flags = D_DISABLED;
 			(void) ustrzcpy(eof_lyric_line_menu_mark_text, sizeof(eof_lyric_line_menu_mark_text), "&Mark\t" CTRL_NAME "+M/X");
 		}
 
@@ -1515,6 +1543,10 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{
+				eof_note_lyrics_menu[2].flags = D_DISABLED;
+			}
+			if(eof_note_type_v == 3)
+			{	//HARM3 can't have lyric lines
 				eof_note_lyrics_menu[2].flags = D_DISABLED;
 			}
 
@@ -5431,8 +5463,12 @@ int eof_menu_sp_edit_timing(void)
 
 int eof_menu_lyric_line_mark(void)
 {
-	int retval = eof_menu_section_mark(EOF_LYRIC_PHRASE_SECTION);
+	int retval;
 
+	if(eof_note_type_v == 3)
+		return 1;	//Do not allow marking lyric lines in HARM3, which is against Rock Band authoring style
+
+	retval = eof_menu_section_mark(EOF_LYRIC_PHRASE_SECTION);
 	eof_reset_lyric_preview_lines();
 
 	///DEBUG
@@ -10544,6 +10580,26 @@ int eof_menu_copy_kick_drum_lane_track_14(void)
 	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
+int eof_menu_copy_lyric_lines_set_0(void)
+{
+	return eof_menu_copy_lyric_lines_from_vocal_set(eof_song, 0, eof_note_type);
+}
+
+int eof_menu_copy_lyric_lines_set_1(void)
+{
+	return eof_menu_copy_lyric_lines_from_vocal_set(eof_song, 1, eof_note_type);
+}
+
+int eof_menu_copy_lyric_lines_set_2(void)
+{
+	return eof_menu_copy_lyric_lines_from_vocal_set(eof_song, 2, eof_note_type);
+}
+
+int eof_menu_copy_lyric_lines_set_3(void)
+{
+	return eof_menu_copy_lyric_lines_from_vocal_set(eof_song, 3, eof_note_type);
+}
+
 int eof_menu_note_toggle_hi_hat_open(void)
 {
 	unsigned long i, flags, tracknum;
@@ -12075,7 +12131,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 						tp->lines = 0;	//Erase any existing lyric lines in the track
 						firstlinephrasecreated = 1;
 					}
-					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, 0xFF);	//Add a line phrase
+					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, 0xFF, 0);	//Add a line phrase
 					if(ctr + 1 < tp->lyrics)
 					{	//If there's at least one more lyric
 						linestart = tp->lyric[ctr + 1]->pos;	//Track its start position
@@ -12135,7 +12191,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 
 	if(lastlyricend)
 	{	//If there was a lyric line in progress
-		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, 0xFF);	//Add a line phrase
+		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, 0xFF, 0);	//Add a line phrase
 	}
 
 	(void) pack_fclose(fp);
@@ -13235,7 +13291,7 @@ int eof_menu_note_split_lyric_line_after_selected(void)
 							thisline->end_pos = thispos + eof_get_note_length(eof_song, eof_selected_track, i);
 
 							//Create a new lyric line starting at the next lyric that ends at the same timestamp as this lyric line
-							eof_vocal_track_add_line(tp, nextpos, end, 0, diff);
+							eof_vocal_track_add_line(tp, nextpos, end, 0, diff, 0);
 							if(old_lyric_count >= tp->lines)
 								allegro_message("Split after lyric line failed");
 						}

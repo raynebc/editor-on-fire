@@ -1487,16 +1487,6 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 	if(!eof_song)
 		return 0;	//Error
 
-	//Store the active difficulty number into the appropriate variable, in case changing between a vocal and instrument track
-	if(eof_track_is_vocal_track(eof_song, eof_selected_track))
-	{	//If a vocal track is active
-		eof_note_type_v = eof_note_type;	//Store the active difficulty number into the vocal difficulty variable
-	}
-	else
-	{
-		eof_note_type_i = eof_note_type;	//Store the active difficulty number into the instrument difficulty variable
-	}
-
 	if((tracknum > 0) && (tracknum < eof_song->tracks))
 	{	//If the specified track number is valid
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -1545,16 +1535,6 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 		eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
 	}
 	eof_set_color_set();
-
-	//Update the active difficulty number into the appropriate variable, in case only the active difficulty and not the active track has changed
-	if(eof_track_is_vocal_track(eof_song, eof_selected_track))
-	{	//If a vocal track is active
-		eof_note_type_v = eof_note_type;	//Store the active difficulty number into the vocal difficulty variable
-	}
-	else
-	{
-		eof_note_type_i = eof_note_type;	//Store the active difficulty number into the instrument difficulty variable
-	}
 
 	return 1;
 }

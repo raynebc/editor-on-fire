@@ -819,6 +819,9 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 	//Returns zero on error
 void eof_track_delete_section(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long index);
 	//Deletes the specified instance of the specified section type and moves all phrases that follow back in the array one position
+int eof_menu_copy_lyric_lines_from_vocal_set(EOF_SONG *sp, unsigned char source_set, unsigned char dest_set);
+	//Repalces all lyric lines in the destination vocal set with those from the source set
+	//Returns zero on error or user cancellation
 int eof_menu_copy_sections_from_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack, unsigned long sectiontype);
 	//Replaces all instances of the specified section type in the destination track with those from the specified source track, prompting the user before removal of any existing instances
 	//Returns zero on error or user cancellation
@@ -933,9 +936,10 @@ long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Retu
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns thelyric one after the specified lyric that is in the same vocal part, or -1 if there is none
 void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified lyric track (based on the currently loaded audio and chart).  If sel is zero, the currently selected note is deselected automatically.
 int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Marks all lyric phrases within the specified time span for overdrive.  Returns nonzero on success
-int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned long flags, unsigned char difficulty);
+int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned long flags, unsigned char difficulty, char suppress_sort);
 	//Adds a lyric phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 	//The difficulty level at this time is typically going to just be 0xFF to indicate it applies to the entire track
+	//suppress_sort can be specified as non-zero to avoid the lyric lines array from being immediately sorted after the line is added (ie. when "copy from" must copy lyric lines from a source vocal set without interference)
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);

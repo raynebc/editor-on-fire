@@ -1256,7 +1256,7 @@ int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos
 	return 0;	//Return error
 }
 
-int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned long flags, unsigned char difficulty)
+int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned long flags, unsigned char difficulty, char suppress_sort)
 {
 	if(tp && (tp->lines < EOF_MAX_LYRIC_LINES))
 	{	//If the maximum number of lyric phrases hasn't already been defined
@@ -1266,7 +1266,8 @@ int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsi
 		tp->line[tp->lines].name[0] = '\0';
 		tp->line[tp->lines].difficulty = difficulty;
 		tp->lines++;
-		eof_sort_and_merge_overlapping_sections(tp->line, &tp->lines);	//Sort and remove overlapping instances
+		if(!suppress_sort)
+			eof_sort_and_merge_overlapping_sections(tp->line, &tp->lines);	//Sort and remove overlapping instances, unless the calling function is preventing this
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -3082,7 +3083,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		case EOF_LYRIC_PHRASE_SECTION:	//Lyric Phrase section
 			if(eof_track_is_vocal_track(sp, track))
 			{	//Lyric phrases are only valid for vocal tracks
-				int retval = eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, flags, difficulty);
+				int retval = eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, flags, difficulty, 0);
 				if(retval)
 				{	//The lyric line was added
 					return 1;	//Return success
@@ -3280,6 +3281,62 @@ void eof_track_delete_section(EOF_SONG *sp, unsigned long track, unsigned long s
 	}
 }
 
+int eof_menu_copy_lyric_lines_from_vocal_set(EOF_SONG *sp, unsigned char source_set, unsigned char dest_set)
+{
+	unsigned long ctr;
+	EOF_PHRASE_SECTION *lineptr;
+	int prompted = 0, undo_made = 0;
+
+	if(!sp || (source_set == 3) || (dest_set == 3) || (source_set == dest_set))
+		return 0;	//Invalid parameters
+
+	//Remove any lyric lines from the destination vocal set
+	for(ctr = sp->vocal_track[0]->lines; ctr > 0; ctr--)
+	{	//For each lyric line in reverse order
+		lineptr = &sp->vocal_track[0]->line[ctr - 1];
+		if(lineptr->difficulty == dest_set)
+		{	//If this lyric line is in the destination vocal set
+			if(!prompted)
+			{	//If the user had not been prompted yet
+				prompted = 1;
+				if(alert(NULL, "Warning:  Existing lyric lines in this vocal set will be lost.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user does not opt to continue
+					return 0;
+				}
+			}
+			if(!undo_made)
+			{
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			eof_vocal_track_delete_line(sp->vocal_track[0], ctr - 1);	//Delete the lyric line
+		}
+	}
+
+	//Copy any lyric lines from the source vocal set to the destination vocal set
+	for(ctr = 0; ctr < sp->vocal_track[0]->lines; ctr++)
+	{	//For each lyric line
+		lineptr = &sp->vocal_track[0]->line[ctr];
+		if(lineptr->difficulty == source_set)
+		{	//If this lyric line is in the source vocal set
+			if(!undo_made)
+			{
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			eof_vocal_track_add_line(sp->vocal_track[0], lineptr->start_pos, lineptr->end_pos, lineptr->flags, dest_set, 1);	//Create a matching lyric line in the destination vocal set, DO NOT sort the lyric array while lyric lines are being copied
+		}
+	}
+
+	qsort(sp->vocal_track[0]->line, (size_t)sp->vocal_track[0]->lines, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort the lyric lines now that they have been appropriately copied
+	eof_reset_lyric_preview_lines();
+
+	///DEBUG
+	eof_check_and_log_lyric_line_errors(eof_song, 0);
+
+	return 1;
+}
+
 int eof_menu_copy_sections_from_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack, unsigned long sectiontype)
 {
 	unsigned long *src_sectioncount = NULL, *dst_sectioncount = NULL, ctr, exclude_flag = 0, include_flag = 0;
@@ -3361,6 +3418,8 @@ int eof_menu_section_mark(unsigned long section_type)
 		{
 			track = eof_selected_track;	//For all sections marked with this function, catalog entries excluded, the active track is the one the section applies to
 			diff = 0xFF;				//And does not apply to a specific difficulty
+			if(section_type == EOF_LYRIC_PHRASE_SECTION)
+				diff = eof_note_type;	//Lyric lines are exceptions, which are specific to each vocal set
 			if((section_type == EOF_HANDSHAPE_SECTION) || (section_type == EOF_ARPEGGIO_SECTION))
 				diff = eof_note_type;	//Arpeggio/handshape phrases are exceptions, which will be defined for the active track difficulty
 			if((section_type == EOF_TREMOLO_SECTION) && (eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
@@ -3511,6 +3570,9 @@ void eof_enforce_midi_section_endings(int silent)
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each note in this track
 					unsigned long notepos = eof_get_note_pos(eof_song, track, ctr);
+
+					if((sectiontype == EOF_LYRIC_PHRASE_SECTION) && (phrase[sectionnum].difficulty != eof_get_note_type(eof_song, track, ctr)))
+						continue;	//If lyric lines are being checked, and this lyric is not in the same vocal set, skip the lyric
 
 					if(notepos == endpos)
 					{	//If this note starts at the end position of this section instance

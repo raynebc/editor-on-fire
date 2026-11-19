@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include "../agup/agup.h"
+#include "../modules/g-idle.h"
 #include "../config.h"
 #include "../main.h"
 #include "../dialog.h"
@@ -250,6 +251,8 @@ int eof_menu_help_about(void)
 
 int eof_reset_display(void)
 {
+	unsigned retry = 5;
+
 	(void) eof_set_display_mode(eof_screen_width, eof_screen_height);
 
 	//Update coordinate related items
@@ -267,6 +270,19 @@ int eof_reset_display(void)
 	{
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 		(void) eof_display_notes_panel();
+	}
+
+	//Re-create the mouse in case it is broken
+	remove_mouse();
+	while(install_mouse() < 0)
+	{	//Try to install the mouse up to 5 times
+		retry--;
+		if(!retry)
+		{
+			allegro_message("Can't set up mouse!  Error: %s",allegro_error);
+			return D_O_K;
+		}
+		Idle(1);	//Brief wait before retry
 	}
 
 	eof_render();

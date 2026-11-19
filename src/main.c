@@ -81,6 +81,7 @@ char        eof_track_diff_highlighted_status[256] = {0};
 char        eof_track_diff_highlighted_tech_note_status[256] = {0};
 char      * eof_snap_name[11] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "1/64", "1/96", "Custom"};
 char      * eof_input_name[EOF_INPUT_NAME_NUM + 1] = {"Classic", "Piano Roll", "Hold", "RexMundi", "Guitar Tap", "Guitar Strum", "Feedback"};
+char        eof_vocal_set_names[4][13] = {"PART VOCALS", "HARM1", "HARM2", "HARM3"};	//The valid vocal set names
 
 NCDFS_FILTER_LIST * eof_filter_music_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_ogg_files = NULL;
@@ -218,7 +219,7 @@ int         eof_dont_check_for_updates = 0;	//If nonzero, EOF will skip checking
 int         eof_last_new_event_track_specific_status = 0;	//Tracks the last selected/deselected status of the track specific checkbox in the various event addition dialogs
 int         eof_convert_measure_note_gap = 1;	//If nonzero, and a 1/# measure note gap is in use, where the denominator is a multiple of 4, eof_get_effective_minimum_note_distance() will divide that denominator by 4 to treat it as a 1/# beat note gap to get results that match the logic for the built in grid snap values like 1/32
 int         eof_auto_show_waveform = 0;		//If nonzero, automatically enables the waveform graph whenever a project is loaded and recreates the waveform if it's enabled at the time an OGG file is loaded/changed
-int         eof_rocksmith_focus = 0;			//If nonzero, EOF will hide some non-Rocksmith related menu items
+int         eof_rocksmith_focus = 0;			//If nonzero, EOF will hide some non-Rocksmith related menu items, change some note panel macro behavior
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
 int         eof_dont_auto_name_double_stops = 0;	//If nonzero, the chord detection logic will not name chords that have only two pitches (unique or otherwise)
 int         eof_section_auto_adjust = 1;		//If nonzero, section and FHP positions are updated when all their contained notes are simultaneously moved
@@ -806,14 +807,15 @@ void eof_find_lyric_preview_lines(void)
 	unsigned long dist = 0;
 	int beyond = 1;
 	int adj_eof_music_pos = EOF_SEEK_POS;	//The current seek position of the chart, adjusted for AV delay
-	unsigned target_diff = eof_note_type;		//Which vocal part will be used to generate the lyric preview
 
-	eof_preview_line[0] = eof_preview_line[1] = -1;	//Clear the lyric preview lines
+	eof_preview_line[0] = eof_preview_line[1] = 0;	//Clear the lyric preview lines
 	eof_preview_line_lyric[0] = eof_preview_line_lyric[1] = 0;
 	eof_preview_line_end_lyric[0] = eof_preview_line_end_lyric[1] = 0;
 
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{	//For each defined lyric line
+		if(eof_song->vocal_track[0]->line[i].difficulty != eof_note_type_v)
+			continue;	//If this lyric line isn't in the active vocal set, skip it
 		if((adj_eof_music_pos >= eof_song->vocal_track[0]->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos))
 		{	//If the seek position is within this line
 			current_line = i;	//Track this
@@ -822,6 +824,8 @@ void eof_find_lyric_preview_lines(void)
 	}
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{	//For each defined lyric line
+		if(eof_song->vocal_track[0]->line[i].difficulty != eof_note_type_v)
+			continue;	//If this lyric line isn't in the active vocal set, skip it
 		if(adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos)
 		{	//If the seek position is at/before the line's end position
 			beyond = 0;
@@ -832,18 +836,14 @@ void eof_find_lyric_preview_lines(void)
 	{	//If the seek position is after all defined lyric lines
 		return;
 	}
-	if(eof_selected_track != EOF_TRACK_VOCALS)
-	{	//If the vocal tracks is not active
-		target_diff = eof_note_type_v;	//Use the last active vocal part to build lyric previews from
-	}
 	if(current_line >= 0)
 	{	//If the seek position is inside a lyric line
 		//Build first lyric preview line
 		eof_preview_line[0] = current_line;
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{	//For each lyric
-			if(target_diff != eof_get_note_type(eof_song, eof_selected_track, i))
-				continue;	//If the lyric doesn't apply to the target vocal part, skip it
+			if(eof_note_type_v != eof_get_note_type(eof_song, eof_selected_track, i))
+				continue;	//If the lyric doesn't apply to the active vocal set, skip it
 
 			if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos))
 			{
@@ -861,7 +861,9 @@ void eof_find_lyric_preview_lines(void)
 		}
 		//Look for second lyric preview line
 		for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
-		{
+		{	//For each lyric line
+			if(eof_song->vocal_track[0]->line[i].difficulty != eof_note_type_v)
+				continue;	//If this lyric line isn't in the active vocal set, skip it
 			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (!dist || (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist)))
 			{
 				next_line = i;
@@ -874,8 +876,8 @@ void eof_find_lyric_preview_lines(void)
 			eof_preview_line[1] = next_line;
 			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 			{	//For each lyric
-				if(target_diff != eof_get_note_type(eof_song, eof_selected_track, i))
-					continue;	//If the lyric doesn't apply to the target vocal part, skip it
+				if(eof_note_type_v != eof_get_note_type(eof_song, eof_selected_track, i))
+					continue;	//If the lyric doesn't apply to the active vocal set, skip it
 
 				if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos))
 				{
@@ -3568,7 +3570,6 @@ void eof_render_lyric_preview(BITMAP * bp)
 	char *tempstring = NULL;			//The code to render in green needs special handling to suppress the / character
 	EOF_PHRASE_SECTION *linenum = NULL;	//Used to find the background color to render the lyric lines in (green for overdrive, otherwise transparent)
 	int bgcol1 = -1, bgcol2 = -1;
-	unsigned target_diff = eof_note_type;		//Which vocal part will be used to generate the lyric preview
 
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
 	unsigned long i, x;
@@ -3588,11 +3589,6 @@ void eof_render_lyric_preview(BITMAP * bp)
 		return;
 	}
 
-	if(eof_selected_track != EOF_TRACK_VOCALS)
-	{	//If the vocal tracks is not active
-		target_diff = eof_note_type_v;	//Use the last active vocal part to build lyric previews from
-	}
-
 //Build both lyric preview lines
 	for(x = 0; x < 2; x++)
 	{	//For each of the two lyric preview lines to build
@@ -3610,8 +3606,8 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
-			if(target_diff != eof_get_note_type(eof_song, eof_selected_track, i))
-				continue;	//If the lyric doesn't apply to the target vocal part, skip it
+			if(eof_note_type_v != eof_get_note_type(eof_song, eof_selected_track, i))
+				continue;	//If the lyric doesn't apply to the target vocal set, skip it
 
 			lyriclength = ustrlen(eof_song->vocal_track[0]->lyric[i]->text);	//This value will be used multiple times
 

@@ -716,6 +716,7 @@ extern char        eof_track_diff_highlighted_status[256];	//For each of the 255
 extern char        eof_track_diff_highlighted_tech_note_status[256];	//Same as eof_track_diff_highlighted_status[], but for tech notes
 extern char      * eof_snap_name[11];
 extern char      * eof_input_name[EOF_INPUT_NAME_NUM + 1];
+extern char        eof_vocal_set_names[4][13];
 
 extern char        eof_supports_mp3;
 extern char        eof_supports_oggcat;

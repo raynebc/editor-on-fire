@@ -4969,7 +4969,6 @@ int eof_build_vocal_midi_track(EOF_SONG *sp, unsigned long track, unsigned char 
 	int vel = 100;				//Rock Band style MIDIs use 100 as a generic velocity value
 	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
 	PACKFILE * fp;
-	char tracknames[4][13] = {"PART VOCALS", "HARM1", "HARM2", "HARM3"};	//The valid vocal track names
 
 	if(!sp || (track >= sp->tracks) || !anchorlist || !tslist || !filename || (type > 3))
 	{	//Invalid parameters
@@ -4977,7 +4976,7 @@ int eof_build_vocal_midi_track(EOF_SONG *sp, unsigned long track, unsigned char 
 	}
 
 	has_stored_tempo = eof_song_has_stored_tempo_track(sp) ? 1 : 0;	//Store this status
-	exportname = tracknames[type];	//Use the appropriate track name for the vocal set being exported
+	exportname = eof_vocal_set_names[type];	//Use the appropriate track name for the vocal set being exported
 	tracknum = 0;	//At this time, there is only one vocal track (sp->vocal_track[0])
 
 	/* make vocals track */

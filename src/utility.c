@@ -892,6 +892,9 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 				matches = lastlyricindex = 0;	//Reset these
 				for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
 				{	//For each lyric
+					if(tp->lyric[ctr2]->type != diff)
+						continue;	//If the lyric is not in the same vocal set as the line being examined, skip it
+
 					if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
 					{	//If this lyric is within the scope of the lyric line
 						if(matches && (ctr2 > lastlyricindex + 1))

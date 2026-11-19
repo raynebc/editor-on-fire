@@ -1559,8 +1559,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						eof_note_type++;
 					}
 				}
-				eof_window_title_dirty = 1;
-				(void) eof_detect_difficulties(eof_song, eof_selected_track);
+				eof_set_active_difficulty(eof_note_type);
 			}
 			eof_mix_find_claps();
 			eof_mix_start_helper();
@@ -8173,11 +8172,7 @@ void eof_editor_logic_common(void)
 			}
 			if(eof_note_type != eof_hover_type)
 			{
-				eof_note_type = eof_hover_type;
-				eof_mix_find_claps();
-				eof_mix_start_helper();
-				eof_window_title_dirty = 1;
-				(void) eof_detect_difficulties(eof_song, eof_selected_track);
+				eof_set_active_difficulty(eof_hover_type);
 			}
 		}
 	}
@@ -8508,7 +8503,19 @@ unsigned char eof_set_active_difficulty(unsigned char diff)
 	{	//If the specified track difficulty is valid
 		eof_note_type = diff;	//Make it the active difficulty
 	}
+	//Update the active difficulty number into the appropriate variable, in case only the active difficulty and not the active track has changed
+	if(eof_track_is_vocal_track(eof_song, eof_selected_track))
+	{	//If a vocal track is active
+		eof_note_type_v = eof_note_type;	//Store the active difficulty number into the vocal difficulty variable
+	}
+	else
+	{
+		eof_note_type_i = eof_note_type;	//Store the active difficulty number into the instrument difficulty variable
+	}
 	eof_window_title_dirty = 1;
+	eof_mix_find_claps();
+	eof_mix_start_helper();
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	return eof_note_type_max;
 }
 

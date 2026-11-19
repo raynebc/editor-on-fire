@@ -1031,15 +1031,15 @@ int eof_menu_edit_paste_vocal_logic(int function)
 			paste_pos[paste_count] = new_lyric->pos;
 			paste_count++;
 
-			if(source_id == eof_log_id)
-			{	//If the copy/paste is being performed within the same EOF instance
+			if((source_id == eof_log_id) && (eof_note_type != 3))
+			{	//If the copy/paste is being performed within the same EOF instance, and the paste is being done into HARM3 (which shouldn't have any lyric lines defined)
 				if(temp_lyric.phrasenum != lastlinenum)
 				{	//If this pasted lyric's source line number is different from that of the previous pasted lyric
 					EOF_PHRASE_SECTION *phraseptr;
 
 					if(lastlinenum != 0xFFFFFFFF)
 					{	//If the previous pasted lyric's source lyric was in a line
-						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, lineflags, NULL);
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, eof_note_type, linestart, lineend, lineflags, NULL);
 					}
 					linestart = new_lyric->pos;	//Track start of new line
 					phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, temp_lyric.pos + firstnotepos);	//Look up the lyric line at the source note's original position
@@ -1060,11 +1060,11 @@ int eof_menu_edit_paste_vocal_logic(int function)
 			}
 		}//If the lyric was successfully created
 	}//For each lyric in the clipboard file
-	if((source_id == eof_log_id) && !eof_note_type)
-	{	//If the copy/paste is being performed within the same EOF instance, and the paste is being done into the main vocal part
+	if((source_id == eof_log_id) && (eof_note_type != 3))
+	{	//If the copy/paste is being performed within the same EOF instance, and the paste is being done into HARM3 (which shouldn't have any lyric lines defined)
 		if(lastlinenum != 0xFFFFFFFF)
 		{	//If a lyric line was in progress when the last of the lyrics were pasted, add the line now
-			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, lineflags, NULL);
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, eof_note_type, linestart, lineend, lineflags, NULL);
 		}
 	}
 	(void) pack_fclose(fp);
@@ -4751,6 +4751,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	unsigned char frets[8] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
 	unsigned char finger[8] = {0};	//Used to store NULL finger data to support copying legacy notes to a pro guitar track
 	unsigned long tracknum, ctr;
+	unsigned char type;
 
 	if(!fp || !sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || !track)
 		return;	//Invalid parameters
@@ -4759,7 +4760,8 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 
 	/* write the note */
 	(void) eof_save_song_string_pf(eof_get_note_name(sp, track, note), fp);		//Write the note's name
-	(void) pack_putc(eof_get_note_type(sp, track, note), fp);					//Write the note's difficulty
+	type = eof_get_note_type(sp, track, note);
+	(void) pack_putc(type, fp);											//Write the note's difficulty
 	(void) pack_putc(eof_get_note_note(sp, track, note), fp);					//Write the note bitmask value
 	(void) pack_putc(eof_get_note_accent(sp, track, note), fp);					//Write the note accent bitmask value
 	note_len = eof_get_note_length(sp, track, note);
@@ -4814,6 +4816,8 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 
 			for(ctr = 0; ctr < tp->lines; ctr++)
 			{	//For each lyric line in this track
+				if(tp->line[ctr].difficulty != type)
+					continue;	//If this lyric line isn't in the same vocal set as the lyric, skip it
 				if((pos >= tp->line[ctr].start_pos) && (pos <= tp->line[ctr].end_pos))
 				{	//If the lyric being written to the clipboard is inside the lyric line
 					linenum = ctr;	//Record this lyric line number
