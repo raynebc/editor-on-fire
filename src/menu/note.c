@@ -5488,13 +5488,16 @@ int eof_menu_lyric_line_unmark_logic(int make_undo)
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
+	{	//For each lyric
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-		{
+		{	//If the lyric is selected
 			for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
-			{
+			{	//For each lyric line
+				if(eof_song->vocal_track[tracknum]->lyric[i]->type != eof_song->vocal_track[tracknum]->line[j].difficulty)
+					continue;	//If the lyric line isn't in the same vocal set, skip it
+
 				if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->vocal_track[tracknum]->line[j].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_song->vocal_track[tracknum]->line[j].end_pos))
-				{
+				{	//If the lyric is within the lyric line
 					if(make_undo)
 					{	//If the calling function wanted to make an undo state
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);

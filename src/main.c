@@ -483,7 +483,6 @@ char eof_screen_zoom = 0;							//Tracks whether EOF will perform a x2 zoom rend
 EOF_SELECTION_DATA eof_selection;
 
 /* lyric preview data */
-unsigned long eof_preview_line[2] = {0};
 unsigned long eof_preview_line_lyric[2] = {0};
 unsigned long eof_preview_line_end_lyric[2] = {0};
 
@@ -789,8 +788,6 @@ void eof_reset_lyric_preview_lines(void)
 {
 //	eof_log("eof_reset_lyric_preview_lines() entered", 3);
 
-	eof_preview_line[0] = 0;
-	eof_preview_line[1] = 0;
 	eof_preview_line_lyric[0] = 0;
 	eof_preview_line_lyric[1] = 0;
 	eof_preview_line_end_lyric[0] = 0;
@@ -807,14 +804,19 @@ void eof_find_lyric_preview_lines(void)
 	unsigned long dist = 0;
 	int beyond = 1;
 	int adj_eof_music_pos = EOF_SEEK_POS;	//The current seek position of the chart, adjusted for AV delay
+	unsigned target_set = eof_note_type_v;	//The vocal set to generate previews for
+	unsigned long eof_preview_line[2];
 
 	eof_preview_line[0] = eof_preview_line[1] = 0;	//Clear the lyric preview lines
 	eof_preview_line_lyric[0] = eof_preview_line_lyric[1] = 0;
 	eof_preview_line_end_lyric[0] = eof_preview_line_end_lyric[1] = 0;
 
+	if(eof_note_type_v == 3)
+		target_set = 2;		//In Rock Band, HARM3 does not define its own lyric lines and uses those from HARM2 instead
+
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{	//For each defined lyric line
-		if(eof_song->vocal_track[0]->line[i].difficulty != eof_note_type_v)
+		if(eof_song->vocal_track[0]->line[i].difficulty != target_set)
 			continue;	//If this lyric line isn't in the active vocal set, skip it
 		if((adj_eof_music_pos >= eof_song->vocal_track[0]->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos))
 		{	//If the seek position is within this line
@@ -824,8 +826,9 @@ void eof_find_lyric_preview_lines(void)
 	}
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{	//For each defined lyric line
-		if(eof_song->vocal_track[0]->line[i].difficulty != eof_note_type_v)
+		if(eof_song->vocal_track[0]->line[i].difficulty != target_set)
 			continue;	//If this lyric line isn't in the active vocal set, skip it
+
 		if(adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos)
 		{	//If the seek position is at/before the line's end position
 			beyond = 0;
@@ -842,14 +845,17 @@ void eof_find_lyric_preview_lines(void)
 		eof_preview_line[0] = current_line;
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{	//For each lyric
-			if(eof_note_type_v != eof_get_note_type(eof_song, eof_selected_track, i))
+			if(target_set != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, i))
 				continue;	//If the lyric doesn't apply to the active vocal set, skip it
 
 			if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos))
 			{
 				eof_preview_line_lyric[0] = i;
 				for(j = i; j < eof_song->vocal_track[0]->lyrics; j++)
-				{
+				{	//For each lyric
+					if(target_set != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, j))
+						continue;	//If the lyric doesn't apply to the active vocal set, skip it
+
 					if(eof_song->vocal_track[0]->lyric[j]->pos > eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos)
 					{
 						break;
@@ -862,8 +868,9 @@ void eof_find_lyric_preview_lines(void)
 		//Look for second lyric preview line
 		for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 		{	//For each lyric line
-			if(eof_song->vocal_track[0]->line[i].difficulty != eof_note_type_v)
+			if(eof_song->vocal_track[0]->line[i].difficulty != target_set)
 				continue;	//If this lyric line isn't in the active vocal set, skip it
+
 			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (!dist || (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist)))
 			{
 				next_line = i;
@@ -876,14 +883,17 @@ void eof_find_lyric_preview_lines(void)
 			eof_preview_line[1] = next_line;
 			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 			{	//For each lyric
-				if(eof_note_type_v != eof_get_note_type(eof_song, eof_selected_track, i))
+				if(target_set != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, i))
 					continue;	//If the lyric doesn't apply to the active vocal set, skip it
 
 				if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos))
 				{
 					eof_preview_line_lyric[1] = i;
 					for(j = i; j < eof_song->vocal_track[0]->lyrics; j++)
-					{
+					{	//For each lyric
+						if(target_set != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, i))
+							continue;	//If the lyric doesn't apply to the active vocal set, skip it
+
 						if(eof_song->vocal_track[0]->lyric[j]->pos > eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos)
 						{
 							break;
@@ -3570,11 +3580,11 @@ void eof_render_lyric_preview(BITMAP * bp)
 	char *tempstring = NULL;			//The code to render in green needs special handling to suppress the / character
 	EOF_PHRASE_SECTION *linenum = NULL;	//Used to find the background color to render the lyric lines in (green for overdrive, otherwise transparent)
 	int bgcol1 = -1, bgcol2 = -1;
-
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
 	unsigned long i, x;
 	int offset = -1;
 	int space;	//Track the spacing for lyric preview, taking pitch shift and grouping logic into account
+	unsigned target_set = eof_note_type_v;	//The vocal set to generate previews for
 
 	if(!bp)
 	{
@@ -3588,6 +3598,9 @@ void eof_render_lyric_preview(BITMAP * bp)
 		textout_centre_ex(bp, font, "View Song>Manage Stored MIDI tracks", bp->w / 2, 36, eof_color_red, bgcol2);
 		return;
 	}
+
+	if(eof_note_type_v == 3)
+		target_set = 2;		//In Rock Band, HARM3 does not define its own lyric lines and uses those from HARM2 instead
 
 //Build both lyric preview lines
 	for(x = 0; x < 2; x++)
@@ -3606,7 +3619,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
-			if(eof_note_type_v != eof_get_note_type(eof_song, eof_selected_track, i))
+			if(target_set != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, i))
 				continue;	//If the lyric doesn't apply to the target vocal set, skip it
 
 			lyriclength = ustrlen(eof_song->vocal_track[0]->lyric[i]->text);	//This value will be used multiple times

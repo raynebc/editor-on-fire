@@ -52,6 +52,9 @@ char eof_notes_macro_lyric_outside_line[50];
 char eof_notes_macro_lyric_line_beginning_with_lowercase[50];
 char eof_notes_macro_lyric_line_exceeding_length[50];
 char eof_notes_macro_lyric_line_contains_unwanted_punct[50];
+char eof_notes_macro_harm1_lyric_line_has_overdrive[50];
+char eof_notes_macro_harm3_lyric_line[50];
+char eof_notes_macro_lyric_not_covered_in_prev_vocal_set[50];
 char eof_notes_macro_ir_comments_defined[50];
 char eof_notes_inactive_track_has_rs_warnings = 0;
 char eof_notes_inactive_track_has_rs_errors = 0;
@@ -2951,6 +2954,27 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "FIRST_LYRIC_CONTAINING_UNWANTED_PUNCTUATION"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_line_contains_unwanted_punct);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_HARM1_LYRIC_LINE_WITH_OVERDRIVE"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_harm1_lyric_line_has_overdrive);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_HARM3_LYRIC_LINE"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_harm3_lyric_line);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_LYRIC_NOT_COVERED_IN_PREV_VOCAL_SET"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_not_covered_in_prev_vocal_set);
 
 		return 1;
 	}
@@ -5855,6 +5879,75 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 					diff = (lyricptr->type <= 3) ? lyricptr->type : 0;
 					eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 					snprintf(eof_notes_macro_lyric_line_contains_unwanted_punct, sizeof(eof_notes_macro_lyric_line_contains_unwanted_punct) - 1, "%spos %s : \"%s\"", voxtracknames[diff], time_string, lyricptr->text);	//Write a string identifying the offending lyric
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_HARM1_DEFINES_OVERDRIVE"))
+	{
+		eof_notes_macro_harm1_lyric_line_has_overdrive[0] = '\0';	//Erase this string
+		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lines); ctr++)
+		{	//For each lyric line
+			lineptr = &eof_song->vocal_track[0]->line[ctr];
+			if((lineptr->difficulty == 1) && (lineptr->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE))
+			{	//If this lyric line is in the HARM1 vocal set and has overdrive applied
+				eof_notes_panel_print_time(lineptr->start_pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
+				snprintf(eof_notes_macro_harm1_lyric_line_has_overdrive, sizeof(eof_notes_macro_harm1_lyric_line_has_overdrive) - 1, "%spos %s", voxtracknames[1], time_string);	//Write a string identifying the offending lyric line
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_HARM3_DEFINES_LYRIC_LINES"))
+	{
+		eof_notes_macro_harm3_lyric_line[0] = '\0';	//Erase this string
+		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lines); ctr++)
+		{	//For each lyric line
+			lineptr = &eof_song->vocal_track[0]->line[ctr];
+			if(lineptr->difficulty == 3)
+			{	//If this lyric line is in the HARM3 vocal set
+				eof_notes_panel_print_time(lineptr->start_pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
+				snprintf(eof_notes_macro_harm3_lyric_line, sizeof(eof_notes_macro_harm3_lyric_line) - 1, "%spos %s", voxtracknames[1], time_string);	//Write a string identifying the offending lyric line
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+		return 2;	//False
+	}
+
+	count_string = strcasestr_spec(macro, "IF_PREV_VOCAL_SET_DOES_NOT_COVER_ALL_LYRICS_IN_SET_");	//Get a pointer to the text that would be the target vocal set number
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long target_diff;
+
+		eof_notes_macro_lyric_not_covered_in_prev_vocal_set[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &target_diff) && (target_diff > 0))
+		{	//If the target vocal set number was successfully parsed and it is a valid parameter (can only target harmony vocal sets)
+			for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
+			{	//For each lyric
+				lyricptr = eof_song->vocal_track[0]->lyric[ctr];	//Simplify
+				if(lyricptr->type != target_diff)
+					continue;	//If this lyric isn't in the specified vocal set, skip it
+
+				for(ctr2 = 0; ctr2 < eof_song->vocal_track[0]->lines; ctr2++)
+				{	//For each lyric line
+					lineptr = &eof_song->vocal_track[0]->line[ctr2];	//Simplify
+
+					if(lineptr->difficulty != target_diff - 1)
+						continue;	//If this lyric line isn't in the vocal set number that is one lower than the target vocal set, skip it
+					if((lyricptr->pos >= lineptr->start_pos) && (lyricptr->pos <= lineptr->end_pos))
+						break;		//if this lyric is within the lower numbered vocal set's lyric line, break from loop
+				}
+				if(ctr2 >= eof_song->vocal_track[0]->lines)
+				{	//If the lyric was not found to be within the span of an appropriate lyric line
+					eof_notes_panel_print_time(lineptr->start_pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
+					snprintf(eof_notes_macro_lyric_not_covered_in_prev_vocal_set, sizeof(eof_notes_macro_lyric_not_covered_in_prev_vocal_set) - 1, "%spos %s : \"%s\"", voxtracknames[diff], time_string, lyricptr->text);	//Write a string identifying the offending lyric
 					dest_buffer[0] = '\0';
 					return 3;	//True
 				}

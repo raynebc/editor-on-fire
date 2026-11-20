@@ -20,7 +20,7 @@
 #include "memwatch.h"
 #endif
 
-int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2)
+int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, unsigned dest_set, struct Lyric_Format **lp, int format, char *inputfilename, char *string2)
 {
 	char * returnedfn = NULL;	//Return string from dialog window
 	FILE *inf;	  //Used to open the input file
@@ -31,7 +31,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	eof_log("EOF_IMPORT_VIA_LC() entered", 1);
 
 //Validate parameters
-	if((tp == NULL) || (inputfilename == NULL))
+	if((tp == NULL) || (inputfilename == NULL) || (dest_set > 3))
 		return 0;	//Return failure
 
 	if((format == 0) && (lp == NULL))
@@ -210,20 +210,29 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		RemapPitches();		//Ensure pitches are within the correct range (except for pitchless lyrics)
 	}
 
-	//Delete any existing lyrics and lines
-	for(i = 0; i < tp->lyrics; i++)
-	{
-		free(tp->lyric[i]);
+	//Delete any existing lyrics and lines in the destination vocal set
+	for(i = tp->lines; i > 0; i--)
+	{	//For each lyric line, in reverse order
+		if(tp->line[i - 1].difficulty == dest_set)
+		{	//If this lyric line is in the destination vocal set
+			eof_vocal_track_delete_line(tp, i - 1);	//Delete it
+		}
 	}
-	tp->lyrics = 0;
-	tp->lines = 0;
+	for(i = tp->lyrics; i > 0; i--)
+	{	//For each lyric, in reverse order
+		if(tp->lyric[i - 1]->type == dest_set)
+		{	//If this lyric is in the destination vocal set
+			eof_vocal_track_delete_lyric(tp, i - 1);	//Delete it
+		}
+	}
+
 	fclose_err(inf);	//Ensure this file gets closed
 	inf=NULL;
 
 ///DEBUG
 DEBUG_DUMP_LYRICS();
 
-	if(EOF_TRANSFER_FROM_LC(tp, &Lyrics) != 0)	//Pass the Lyrics global variable by reference
+	if(EOF_TRANSFER_FROM_LC(tp, dest_set, &Lyrics) != 0)	//Pass the Lyrics global variable by reference
 	{
 		ReleaseMemory(1);	//Release memory allocated during lyric import
 		return 0;		//Return error (failed to import into EOF lyric structure)
@@ -236,7 +245,7 @@ DEBUG_DUMP_LYRICS();
 	return 1;	 		//Return finished EOF lyric structure
 }
 
-int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
+int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, unsigned dest_set, struct _LYRICSSTRUCT_ * lp)
 {
 	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece;	//Conductor of the lyric piece linked list
@@ -249,8 +258,9 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 
 	eof_log("EOF_TRANSFER_FROM_LC() entered", 1);
 
-	if((tp == NULL) || (lp == NULL))
-		return -1;	//Return error (invalid structure pointers)
+	//Validate parameters
+	if((tp == NULL) || (lp == NULL) || (dest_set > 3))
+		return -1;	//Return error
 
 	curline=lp->lines;	//Point line conductor to first lineof lyrics in the Lyrics structure
 	while(curline != NULL)
@@ -281,6 +291,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 
 			temp->pos=curpiece->start;
 			temp->length=(long)curpiece->duration;	//curpiece->duration is an unsigned long value, hopefully this won't cause problems
+			temp->type = dest_set;	//Apply the note to the target vocal set
 			if(ustrlen(curpiece->lyric) > EOF_MAX_LYRIC_LENGTH)
 				return -1;	//Return error (lyric too large to store in EOF's array)
 			if(curpiece->pitch == VOCALPERCUSSION)
@@ -313,7 +324,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 				}
 
 				lasteoflyr = temp;		//Keep track of the last EOF lyric that was added as of when the lyric line is ended
-				(void) eof_vocal_track_add_line(tp,start,curpiece->start + curpiece->duration, flags, 0xFF, 0);	//Add the lyric line definition to the EOF structure
+				(void) eof_vocal_track_add_line(tp,start,curpiece->start + curpiece->duration, flags, dest_set, 0);	//Add the lyric line definition to the target vocal set of the EOF structure
 				lasteofline = &tp->line[tp->lines - 1];	//Keep track of the last EOF lyric line that was added
 			}
 
@@ -344,6 +355,7 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 
 	eof_log("EOF_EXPORT_TO_LC() entered", 1);
 
+	//Validate parameters
 	if((sp == NULL) || (outputfilename == NULL))
 		return -1;	//Return failure
 

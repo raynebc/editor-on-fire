@@ -89,7 +89,7 @@ int eof_read_macro_color(char *string, int *color);
 	//  it is treated as an RGB color code and that color is created and returned through *color
 	//Returns 0 if no color was determined or upon error
 int eof_read_macro_number(char *string, unsigned long *number);
-	//Accepts a string and converts the decimal number representation and stores it into *number
+	//Accepts a string, converts the decimal number representation and stores it into *number
 	//Returns 0 if no number was parsed or upon error
 int eof_read_macro_string(char *string, char *output_string);
 	//Accepts a pointer to part of a string, parses the remainder of the string and stores it into output_string

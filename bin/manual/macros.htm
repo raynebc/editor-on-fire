@@ -418,7 +418,7 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_ANY_LYRICS_ARE_OUTSIDE_LINES%</td>
-<td>Evaluates as true if any lyrics begins outside of all existing lyric lines, in which case the %FIRST_LYRIC_OUTSIDE_LINE% macro will print the location of the first offending lyric.</td>
+<td>Evaluates as true if any lyrics begins outside of all existing lyric lines, in which case the %FIRST_LYRIC_OUTSIDE_LINE% macro will print the location of the first offending lyric.  If the Rocksmith focus preference is enabled, harmony vocal sets are not checked.</td>
 </tr>
 <tr>
 <td>%IF_SONG_TITLE_IS_DEFINED%</td>
@@ -454,7 +454,7 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_ANY_LYRICS_ARE_NON_ASCII%</td>
-<td>Evaluates as true if any of the defined lyrics are detected as having non ASCII text, in which case the %FIRST_LYRIC_WITH_NON_ASCII% macro will print the location of the first offending lyric.</td>
+<td>Evaluates as true if any of the defined lyrics are detected as having non ASCII text, in which case the %FIRST_LYRIC_WITH_NON_ASCII% macro will print the location of the first offending lyric.  If the Rocksmith focus preference is enabled, harmony vocal sets are not checked.</td>
 </tr>
 <tr>
 <td>%IF_IR_LEAD_ARRANGEMENT_DEFINED%</td>
@@ -674,7 +674,7 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_ANY_LYRICS_EXTEND_OUTSIDE_LINES%</td>
-<td>Evaluates as true if any lyrics in the project begins inside a lyric line but extends outside of the line, in which case the %FIRST_LYRIC_EXTENDING_OUTSIDE_LINE% macro will print the location of the first offending lyric.</td>
+<td>Evaluates as true if any lyrics in the project begins inside a lyric line but extends outside of the line, in which case the %FIRST_LYRIC_EXTENDING_OUTSIDE_LINE% macro will print the location of the first offending lyric.  If the Rocksmith focus preference is enabled, harmony vocal sets are not checked.</td>
 </tr>
 <tr>
 <td>%IF_CHART_HAS_ANY_NOTES%</td>
@@ -719,11 +719,11 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_ANY_LYRIC_LINES_BEGIN_WITH_LOWERCASE%</td>
-<td>Evaluates as true if the first character in any lyric line is a lowercase letter, in which case the %FIRST_LYRIC_LINE_BEGINNING_WITH_LOWERCASE% macro will print the position and text of the first offending lyric.</td>
+<td>Evaluates as true if the first character in any lyric line is a lowercase letter, in which case the %FIRST_LYRIC_LINE_BEGINNING_WITH_LOWERCASE% macro will print the position and text of the first offending lyric.  If the Rocksmith focus preference is enabled, harmony vocal sets are not checked.</td>
 </tr>
 <tr>
 <td>%IF_ANY_LYRIC_LINE_EXCEEDS_LENGTH_[NUMBER]%</td>
-<td>Evaluates as true if any lyric line will take more than the specified number of characters to display in-game (taking into account whether syllables are grouped or separated by a space), in which case the %FIRST_LYRIC_LINE_EXCEEDING_LENGTH% macro will print the position and text of the first lyric that caused its lyric line to exceed the specified threshold.</td>
+<td>Evaluates as true if any lyric line will take more than the specified number of characters to display in-game (taking into account whether syllables are grouped or separated by a space), in which case the %FIRST_LYRIC_LINE_EXCEEDING_LENGTH% macro will print the position and text of the first lyric that caused its lyric line to exceed the specified threshold.  If the Rocksmith focus preference is enabled, harmony vocal sets are not checked.</td>
 </tr>
 <tr>
 <td>%IF_SELECTED_LYRIC_HAS_PITCH%</td>
@@ -731,7 +731,7 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_ANY_LYRICS_CONTAIN_PUNCTUATION_EXCEPT_[LIST]%</td>
-<td>Evaluates as true if any lyric contains a punctuation character that is not in the specified list of characters (whitespace characters are not able to be defined in this list), in which case the %FIRST_LYRIC_CONTAINING_UNWANTED_PUNCTUATION% macro will print the position and text of the first offending lyric.</td>
+<td>Evaluates as true if any lyric contains a punctuation character that is not in the specified list of characters (whitespace characters are not able to be defined in this list), in which case the %FIRST_LYRIC_CONTAINING_UNWANTED_PUNCTUATION% macro will print the position and text of the first offending lyric.  If the Rocksmith focus preference is enabled, harmony vocal sets are not checked.</td>
 </tr>
 <tr>
 <td>%IF_AUDIO_IS_LOADED%</td>

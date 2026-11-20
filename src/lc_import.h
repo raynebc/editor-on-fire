@@ -4,8 +4,8 @@
 #include "song.h"
 #include "foflc/Lyric_storage.h"
 
-int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2);
-	//Performs a lyric import from the specified file to the specified EOF_VOCAL_TRACK structure
+int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, unsigned dest_set, struct Lyric_Format **lp, int format, char *inputfilename, char *string2);
+	//Performs a lyric import from the specified file to the specified vocal set of the EOF_VOCAL_TRACK structure
 	//The lyric format will be detected if format is 0.  If there is only one format detected in the lyrics, it will be
 	//imported into the given EOF_VOCAL_TRACK structure.  The return values are as follows:
 	//	-2 if it is a MIDI file with more than one track containing lyrics.  The user should be prompted for which
@@ -35,8 +35,8 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 	//For export formats besides Vrhythm or other MIDI formats, string2 may be NULL
 	//Returns 1 on success, -1 on error and 0 if no lyrics were found in the structure
 
-int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp);
-	//Load the contents of the Lyrics structure into an EOF lyric structure
+int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, unsigned dest_set, struct _LYRICSSTRUCT_ * lp);
+	//Load the contents of the Lyrics structure into the specified vocal set of the EOF vocal track
 	//This is called from EOF_IMPORT_VIA_LC() after the lyrics have been imported
 
 #endif

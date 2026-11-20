@@ -892,8 +892,14 @@ char *DuplicateString(const char *str)
 
 	size=strlen(str);
 	ptr=malloc_err(size+1);
-
 	strcpy(ptr,str);
+
+///DEBUG
+///static unsigned long call_counter = 0;
+///call_counter++;
+///(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "!DEBUG:  DuplicateString() call #%lu allocated pointer %X", call_counter, (unsigned)ptr);
+///eof_log(eof_log_string, 1);
+
 	return ptr;
 }
 
@@ -1843,6 +1849,11 @@ void ReleaseMemory(char release_all)
 	{
 		free(Lyrics.OffsetStringID);
 		Lyrics.OffsetStringID=NULL;
+	}
+	if(Lyrics.YearStringID != NULL)
+	{
+		free(Lyrics.YearStringID);
+		Lyrics.YearStringID=NULL;
 	}
 	if(Lyrics.Offset && !Lyrics.offsetoverride)	//If the offset was not defined by command line
 	{

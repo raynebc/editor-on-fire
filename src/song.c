@@ -3446,7 +3446,7 @@ int eof_menu_section_mark(unsigned long section_type)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(section_type == EOF_LYRIC_PHRASE_SECTION)
 		{	//If the section that was added/edited is a lyric line
-			if(insp)
+			if(insp >= 0)
 			{	//If one or more existing lyric lines are being re-marked
 				(void) eof_menu_lyric_line_unmark_logic(0);	//Remove the lyric lines that the selected notes are in, don't make an undo state
 				insp = -1;
