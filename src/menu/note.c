@@ -1066,7 +1066,10 @@ void eof_prepare_note_menu(void)
 			if(eof_vocals_selected)
 			{	//PART VOCALS SELECTED
 				for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
-				{
+				{	//For each lyric line
+					if(eof_song->vocal_track[tracknum]->line[j].difficulty != eof_note_type_v)
+						continue;	//If this lyric line isn't in the active vocal set, skip it
+
 					if((sel_end >= eof_song->vocal_track[tracknum]->line[j].start_pos) && (sel_start <= eof_song->vocal_track[tracknum]->line[j].end_pos))
 					{
 						inll = 1;
@@ -5529,7 +5532,7 @@ int eof_menu_lyric_line_erase_all(void)
 		return 1;
 
 	eof_clear_input();
-	if(alert(NULL, "Erase all lyric lines?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	if(alert(NULL, "Erase all lyric lines in all vocal sets?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song->vocal_track[tracknum]->lines = 0;
@@ -5587,13 +5590,16 @@ int eof_menu_lyric_line_toggle_overdrive(void)
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
+	{	//For each lyric
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-		{
+		{	//If the lyric is selected
 			for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
-			{
+			{	//For each lyric line
+				if(eof_song->vocal_track[tracknum]->line[j].difficulty != eof_note_type_v)
+					continue;	//If the lyric line isn't in the active vocal set, skip it
+
 				if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->vocal_track[tracknum]->line[j].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_song->vocal_track[tracknum]->line[j].end_pos && !used[j]))
-				{
+				{	//If the lyric is within the lyric line
 					eof_song->vocal_track[tracknum]->line[j].flags ^= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
 					used[j] = 1;
 				}
@@ -6129,6 +6135,7 @@ int eof_new_lyric_dialog(void)
 
 	if((ret == 3) || (eof_pen_lyric.note == EOF_LYRIC_PERCUSSION) || eof_dont_auto_edit_new_lyrics)
 	{	//If the user clicked OK on the edit lyric prompt, a vocal percussion note is being added or the user suppressed the prompt to add lyric text
+		long nextlyric;
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_lyric.note, eof_pen_lyric.pos, eof_pen_lyric.length, eof_note_type, NULL);
 		(void) ustrzcpy(new_lyric->text, sizeof(new_lyric->text), eof_etext);
@@ -6140,7 +6147,11 @@ int eof_new_lyric_dialog(void)
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, eof_selection.current);		//Enforce the variable note gap on the lyric before the new lyric, if appropriate
-		eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, eof_selection.current + 1);	//Enforce the variable note gap on the new lyric (if placed too close before another lyric), if appropriate
+		nextlyric = eof_fixup_next_lyric(eof_song->vocal_track[0], eof_selection.current);
+		if(nextlyric > 0)
+		{	//If there was a next lyric
+			eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, nextlyric);	//Enforce the variable note gap on the new lyric (if placed too close before another lyric), if appropriate
+		}
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_reset_lyric_preview_lines();
 
@@ -12104,6 +12115,9 @@ int eof_note_menu_read_gp_lyric_texts(void)
 	{	//For each lyric in the vocal track
 		index = 0;	//Point index to start of lyric text buffer
 
+		if(tp->lyric[ctr]->type != eof_note_type_v)
+			continue;	//If the lyric isn't in the active vocal set, skip it
+
 		lastlyricend = tp->lyric[ctr]->pos + tp->lyric[ctr]->length;	//Track the end position of this lyric (for adding line phrases)
 		//Read next lyric text entry
 		while(1)
@@ -12124,6 +12138,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 				}
 				if(!last_text_entry_was_linebreak)
 				{	//If the last text was not a linebreak, this one counts as a new lyric text entry
+					long nextlyric;
 					if(index == 0)
 					{	//If this was the first character read for this lyric, it is interpreted as a pitch shift for the previous lyric text
 						buffer[index++] = '+';
@@ -12134,10 +12149,11 @@ int eof_note_menu_read_gp_lyric_texts(void)
 						tp->lines = 0;	//Erase any existing lyric lines in the track
 						firstlinephrasecreated = 1;
 					}
-					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, 0xFF, 0);	//Add a line phrase
-					if(ctr + 1 < tp->lyrics)
+					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, eof_note_type_v, 0);	//Add a line phrase to active vocal set
+					nextlyric = eof_fixup_next_lyric(tp, ctr);
+					if(nextlyric > 0)
 					{	//If there's at least one more lyric
-						linestart = tp->lyric[ctr + 1]->pos;	//Track its start position
+						linestart = tp->lyric[nextlyric]->pos;	//Track its start position
 					}
 					lastlyricend = 0;	//Reset this variable to track that the line has ended
 
@@ -12194,7 +12210,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 
 	if(lastlyricend)
 	{	//If there was a lyric line in progress
-		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, 0xFF, 0);	//Add a line phrase
+		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, eof_note_type_v, 0);	//Add a line phrase to active vocal set
 	}
 
 	(void) pack_fclose(fp);
@@ -13261,7 +13277,10 @@ int eof_menu_note_split_lyric_line_after_selected(void)
 			{	//If a lyric line containing any selected lyric was identified
 				//Count how many lyrics are in the line
 				for(j = 0, count = 0; j < tp->lyrics; j++)
-				{	//For each lyric in the track
+				{	//For each lyric
+					if(tp->lyric[i]->type != tp->lyric[j]->type)
+						continue;	//If this lyric isn't in the vocal set being examined
+
 					nextpos = tp->lyric[j]->pos;	//Simplify
 					if(nextpos > thisline->end_pos)
 						break;	//If this and all remaining lyrics start after the end of the lyric line, stop counting for this line
@@ -13398,6 +13417,9 @@ int eof_menu_note_lyric_line_repair_timing(void)
 	{	//For each lyric line
 		for(lyricctr = 0; lyricctr < tp->lyrics; lyricctr++)
 		{	//For each lyric
+			if(tp->lyric[lyricctr]->type != tp->line[linectr].difficulty)
+				continue;	//If the lyric isn't in the same vocal set as the lyric line being examined, skip it
+
 			if(eof_selection.multi[lyricctr])
 			{	//If this lyric is selected
 				char process = 0;	//By default, do not check/alter the lyric line any further unless selected lyrics put this line in the scope of the function
@@ -13417,6 +13439,9 @@ int eof_menu_note_lyric_line_repair_timing(void)
 					//Update lyric line start position
 					for(lyricctr = 0; lyricctr < tp->lyrics; lyricctr++)
 					{	//For each lyric
+						if(tp->lyric[lyricctr]->type != tp->line[linectr].difficulty)
+							continue;	//If the lyric isn't in the same vocal set as the lyric line being examined, skip it
+
 						lyric_endpos = tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length;
 						if(!eof_find_lyric_line(lyricctr) && (lyric_endpos >= tp->line[linectr].start_pos) && (lyric_endpos <= tp->line[linectr].end_pos))
 						{	//If this lyric does not begin in any line, but it ends in the lyric line being examined
@@ -13450,9 +13475,19 @@ int eof_menu_note_lyric_line_repair_timing(void)
 					//Update lyric line end position
 					for(lyricctr = 0; lyricctr < tp->lyrics; lyricctr++)
 					{	//For each lyric
+						if(tp->lyric[lyricctr]->type != tp->line[linectr].difficulty)
+							continue;	//If the lyric isn't in the same vocal set as the lyric line being examined, skip it
+
 						if((tp->lyric[lyricctr]->pos >= tp->line[linectr].start_pos) && (tp->lyric[lyricctr]->pos <= tp->line[linectr].end_pos))
 						{	//If this lyric begins in the lyric line being examined
-							for(;(lyricctr + 1 < tp->lyrics) && (tp->lyric[lyricctr + 1]->pos <= tp->line[linectr].end_pos);lyricctr++);	//Advance lyricctr to reference the last lyric beginning in this line
+							unsigned long ctr;
+							for(ctr = lyricctr + 1; ctr < tp->lyrics; ctr++)
+							{	//For the remaining lyrics
+								if(tp->lyric[ctr]->pos > tp->line[linectr].end_pos)
+									break;	//If this lyric and all remaining lyrics are beyond the end of the lyric line being examined, stop updating lyricctr
+								if(tp->lyric[ctr]->type == tp->line[linectr].difficulty)
+									lyricctr = ctr;	//If this lyric is in the same vocal set as the lyric line being examined, it is the new latest lyric found in the line
+							}
 							lyric_endpos = tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length;
 
 							if(lyric_endpos != tp->line[linectr].end_pos)

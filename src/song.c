@@ -1182,6 +1182,9 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 		{
 			if(j != i)
 			{	//Comparing each lyric line to each other lyric line
+				if(tp->line[i].difficulty != tp->line[j].difficulty)
+					continue;	//If the lines are in different vocal sets, skip this comparison
+
 				if((tp->line[i].end_pos < tp->line[j].start_pos) && (tp->line[i].end_pos + 1 >= tp->line[j].start_pos))
 				{	//If the lines don't end at least 2ms apart from each other
 					if(tp->line[j].start_pos > 2)
@@ -1218,14 +1221,17 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 	{
 		lc = 0;
 		for(j = 0; j < tp->lyrics; j++)
-		{
+		{	//For each lyric
+			if(tp->lyric[j]->type != tp->line[i-1].difficulty)
+				continue;	//If this lyric isn't in the same vocal set as the lyric line being examined, skip it
+
 			if((tp->lyric[j]->pos >= tp->line[i-1].start_pos) && (tp->lyric[j]->pos <= tp->line[i-1].end_pos))
 			{
 				lc++;
 			}
 		}
 		if(lc <= 0)
-		{
+		{	//If there were no lyrics in this lyric line, delete it
 			eof_vocal_track_delete_line(tp, i-1);
 		}
 	}
@@ -1238,7 +1244,7 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 	}
 }
 
-int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char difficulty)
 {
 	unsigned long ctr;
 
@@ -1246,6 +1252,9 @@ int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos
 	{
 		for(ctr = 0; ctr < tp->lines; ctr++)
 		{	//For each line of lyrics
+			if(tp->line[ctr].difficulty != difficulty)
+				continue;	//If this lyric line isn't in the specified vocal set, skip it
+
 			if((tp->line[ctr].start_pos <= end_pos) && (tp->line[ctr].end_pos >= start_pos))
 			{	//If this lyric line overlaps with the target time range
 				tp->line[ctr].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Set the overdrive flag
@@ -8066,7 +8075,7 @@ int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned lo
 		return eof_pro_guitar_track_add_star_power(sp->pro_guitar_track[tracknum], start_pos, end_pos);
 
 		case EOF_VOCAL_TRACK_FORMAT:
-		return eof_vocal_track_add_star_power(sp->vocal_track[tracknum], start_pos, end_pos);
+		return eof_vocal_track_add_star_power(sp->vocal_track[tracknum], start_pos, end_pos, eof_note_type_v);
 
 		default:
 		break;

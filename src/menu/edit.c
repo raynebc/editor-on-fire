@@ -826,9 +826,9 @@ int eof_menu_edit_copy_vocal(void)
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
+	{	//For each lyric
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-		{
+		{	//If the lyric is selected
 			copy_notes++;
 			if(!first_pos_read || (eof_song->vocal_track[tracknum]->lyric[i]->pos < first_pos))
 			{	//If this is the first selected lyric in the active track, or if this lyric is the earliest selected one found so far
@@ -1042,7 +1042,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, eof_note_type, linestart, lineend, lineflags, NULL);
 					}
 					linestart = new_lyric->pos;	//Track start of new line
-					phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, temp_lyric.pos + firstnotepos);	//Look up the lyric line at the source note's original position
+					phraseptr = eof_get_section_instance_at_pos_of_diff(eof_song, eof_selected_track, eof_note_type, EOF_LYRIC_PHRASE_SECTION, temp_lyric.pos + firstnotepos);	//Look up the lyric line at the source note's original position in the active vocal set
 					if(phraseptr)
 					{	//If the original lyric line from the source lyrics was found
 						lineflags = phraseptr->flags;	//Retain any overdrive status
@@ -1076,9 +1076,12 @@ int eof_menu_edit_paste_vocal_logic(int function)
 		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	}
 	for(i = 0; i < paste_count; i++)
-	{
+	{	//For each pasted note
 		for(j = 0; j < eof_song->vocal_track[tracknum]->lyrics; j++)
-		{
+		{	//For each lyric
+			if(eof_song->vocal_track[tracknum]->lyric[j]->type != eof_note_type_v)
+				continue;	//If the lyric isn't in the active vocal set, skip it
+
 			if(eof_song->vocal_track[tracknum]->lyric[j]->pos == paste_pos[i])
 			{
 				eof_selection.multi[j] = 1;
@@ -4815,7 +4818,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 			unsigned long pos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, note);
 
 			for(ctr = 0; ctr < tp->lines; ctr++)
-			{	//For each lyric line in this track
+			{	//For each lyric line
 				if(tp->line[ctr].difficulty != type)
 					continue;	//If this lyric line isn't in the same vocal set as the lyric, skip it
 				if((pos >= tp->line[ctr].start_pos) && (pos <= tp->line[ctr].end_pos))

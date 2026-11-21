@@ -352,7 +352,10 @@ void eof_mix_find_claps(void)
 	if(eof_vocals_selected)
 	{
 		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-		{
+		{	//For each lyric
+			if(eof_song->vocal_track[tracknum]->lyric[i]->type != eof_note_type_v)
+				continue;	//If the lyric isn't in the active vocal set, skip it
+
 			eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_song->vocal_track[tracknum]->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 			eof_mix_claps++;
 		}
@@ -445,7 +448,10 @@ void eof_mix_find_claps(void)
 	eof_mix_current_note = 0;
 	eof_mix_percussions = 0;
 	for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
-	{
+	{	//For each lyric
+		if(eof_song->vocal_track[0]->lyric[i]->type != eof_note_type_v)
+			continue;	//If this lyric is not in the active vocal set, skip it
+
 		if((eof_song->vocal_track[0]->lyric[i]->note >= 36) && (eof_song->vocal_track[0]->lyric[i]->note <= 84))
 		{	//This is a vocal pitch
 			eof_mix_note_pos[eof_mix_notes] = eof_mix_msec_to_sample(eof_song->vocal_track[0]->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));

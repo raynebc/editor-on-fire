@@ -789,7 +789,9 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option);
 void eof_track_find_disjointed_notes(EOF_SONG *sp, unsigned long track);
 	//Used during Feedback and Stepmania imports to mark notes as disjointed if they begin at the same timestamp but have different lengths
 	//Requires that the target track's notes are already sorted
-int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);
+	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+	//In the case of adding star power to the vocal track, it is added to the vocal set indicated by eof_note_type_v
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
@@ -933,9 +935,9 @@ void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//
 void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp);		//Performs a quicksort of the lyrics array by timestamp
 int eof_song_qsort_lyrics(const void * e1, const void * e2);	//The comparitor function used to quicksort the lyrics array
 long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the lyric one before the specific lyric number that is in the same vocal part, or -1 if there is none
-long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns thelyric one after the specified lyric that is in the same vocal part, or -1 if there is none
+long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the lyric one after the specified lyric that is in the same vocal part, or -1 if there is none
 void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified lyric track (based on the currently loaded audio and chart).  If sel is zero, the currently selected note is deselected automatically.
-int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Marks all lyric phrases within the specified time span for overdrive.  Returns nonzero on success
+int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char difficulty);	//Marks all lyric phrases within the specified time span of the specified vocal set for overdrive.  Returns nonzero on success
 int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned long flags, unsigned char difficulty, char suppress_sort);
 	//Adds a lyric phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 	//The difficulty level at this time is typically going to just be 0xFF to indicate it applies to the entire track

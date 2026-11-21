@@ -4865,8 +4865,8 @@ int eof_save_helper(char *destfilename, char silent)
 	{
 		fixvoxpitches = fixvoxphrases = 0;	//Answer no to the prompts on behalf of the user
 	}
-	if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)
-	{	//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
+	if(eof_song->tags->lyrics && eof_get_track_diff_size(eof_song, EOF_TRACK_VOCALS, 0))
+	{	//If user enabled the Lyrics checkbox in song properties and there are lyrics defined in the main vocal set
 		//Save plain script format lyrics
 		(void) append_filename(eof_temp_filename, newfolderpath, "lyrics.txt", (int) sizeof(eof_temp_filename));
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
@@ -4895,8 +4895,8 @@ int eof_save_helper(char *destfilename, char silent)
 		}
 
 		/* save script lyrics if applicable) */
-		if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
-		{
+		if(eof_song->tags->lyrics && eof_get_track_diff_size(eof_song, EOF_TRACK_VOCALS, 0))
+		{	//If user enabled the Lyrics checkbox in song properties and there are lyrics defined in the main vocal set
 			(void) append_filename(eof_temp_filename, newfolderpath, "script.txt", (int) sizeof(eof_temp_filename));
 			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
@@ -4911,8 +4911,8 @@ int eof_save_helper(char *destfilename, char silent)
 		}
 	}
 
-	if(eof_write_lrc_files && eof_song->vocal_track[0]->lyrics && eof_song->vocal_track[0]->lines)
-	{	//If the user opted to save LRC lyric files and there are lyrics and lyric lines defined
+	if(eof_write_lrc_files && eof_get_track_diff_size(eof_song, EOF_TRACK_VOCALS, 0) && eof_song->vocal_track[0]->lines)
+	{	//If the user opted to save LRC lyric files, there are lyrics in the main vocal set and there are any lyric lines defined
 		//Export normal LRC
 		(void) append_filename(eof_temp_filename, newfolderpath, "lyrics.lrc", (int) sizeof(eof_temp_filename));
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
@@ -5056,8 +5056,8 @@ int eof_save_helper(char *destfilename, char silent)
 			if(eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_B, &user_warned) == 2)
 				return 1;	//Return cancellation
 		}
-		if(eof_song->vocal_track[0]->lyrics)
-		{	//If there are lyrics, export them in Rocksmith format as well
+		if(eof_get_track_diff_size(eof_song, EOF_TRACK_VOCALS, 0))
+		{	//If there are lyrics in the main vocal set, export them in Rocksmith format as well
 			char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 			unsigned long numlines;
 			EOF_PHRASE_SECTION temp;
@@ -5100,6 +5100,9 @@ int eof_save_helper(char *destfilename, char silent)
 
 				for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
 				{	//For each lyric
+					if(eof_song->vocal_track[0]->lyric[ctr]->type != 0)
+						continue;	//If this lyric isn't in the main vocal set, skip it
+
 					if(eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text))
 					{	//If the lyric has any characters of value higher than 127
 						exascii = 1;

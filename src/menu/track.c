@@ -6738,6 +6738,8 @@ int eof_note_name_find_next(void)
 	{
 		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 		{	//For each note in this track
+			if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)
+				continue;	//If this note/lyric isn't in the active difficulty or vocal set, skip it
 			if(eof_get_note_pos(eof_song, eof_selected_track, ctr) <= EOF_SEEK_POS)
 				continue;	//If this note isn't after the current seek position, skip it
 

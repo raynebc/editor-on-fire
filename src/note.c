@@ -263,7 +263,7 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr->end_pos += offset;
 		}
 		for(j = 0; j < eof_get_num_lyric_sections(eof_song, i); j++)
-		{	//For each lyric phrase in the track
+		{	//For each lyric line
 			phraseptr = eof_get_lyric_section(eof_song, i, j);
 
 			if(phraseptr->start_pos < neg_offset)
@@ -2177,9 +2177,9 @@ EOF_PHRASE_SECTION *eof_find_lyric_line(unsigned long lyricnum)
 	lyricpos=eof_song->vocal_track[0]->lyric[lyricnum]->pos;
 
 	for(linectr=0;linectr<eof_song->vocal_track[0]->lines;linectr++)
-	{
+	{	//For each lyric line
 		if(eof_song->vocal_track[0]->line[linectr].difficulty != eof_song->vocal_track[0]->lyric[lyricnum]->type)
-			continue;	//If this lyric line isn't in the same difficulty as the specified lyric, skip it
+			continue;	//If this lyric line isn't in the same vocal set as the specified lyric, skip it
 
 		if((eof_song->vocal_track[0]->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track[0]->line[linectr].end_pos >= lyricpos))
 			return &(eof_song->vocal_track[0]->line[linectr]);	//Line found, return it

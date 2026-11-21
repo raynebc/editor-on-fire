@@ -658,7 +658,7 @@ EOF_SONG *eof_load_bf(char * fn)
 						endms = end + 0.5;		//Round to nearest millisecond
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric line #%lu start = %lums, end = %lums", ctr, startms, endms);
 						eof_log(eof_log_string, 1);
-						(void) eof_vocal_track_add_line(sp->vocal_track[0], startms, endms, 0, 0xFF, 0);	//Add the lyric line
+						(void) eof_vocal_track_add_line(sp->vocal_track[0], startms, endms, 0, 0, 0);	//Add the lyric line
 					}
 				}
 				else if((entryid == 11) && (entrysize == 64))
@@ -1074,7 +1074,7 @@ EOF_SONG *eof_load_bf(char * fn)
 		char firstfound = 0;		//Tracks whether the first lyric in this line has been found
 
 		for(ctr2 = 0; ctr2 < sp->vocal_track[0]->lyrics; ctr2++)
-		{	//For each lyric in the chart
+		{	//For each lyric
 			lp = sp->vocal_track[0]->lyric[ctr2];	//Simplify
 			if(ctr2 + 1 < sp->vocal_track[0]->lyrics)
 			{	//If there is another lyric

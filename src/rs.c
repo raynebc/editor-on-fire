@@ -3437,13 +3437,16 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
 	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
-	(void) snprintf(buffer, sizeof(buffer) - 1, "<vocals count=\"%lu\">\n", sp->vocal_track[0]->lyrics);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "<vocals count=\"%lu\">\n", eof_get_track_diff_size(sp, EOF_TRACK_VOCALS, 0));
 	(void) pack_fputs(buffer, fp);
 
 	eof_allocate_ucode_table();
 	tp = sp->vocal_track[0];
 	for(ctr = 0; ctr < tp->lyrics; ctr++)
 	{	//For each lyric
+		if(tp->lyric[ctr]->type != 0)
+			continue;	//If this lyric isn't in the main vocal set, skip it
+
 		//Replace accented characters not supported for Rocksmith lyrics with non-accented versions
 		for(index1 = index2 = 0; index1 < ustrlen(tp->lyric[ctr]->text); index1++)
 		{	//For each character in the expanded XML string
@@ -3473,8 +3476,14 @@ void eof_export_rocksmith_lyrics(EOF_SONG * sp, char * fn, int version)
 		//Determine if this lyric is the last in any defined lyric line
 		for(linenum = 0, lyricend = 0, linefound = 0; linenum < tp->lines; linenum++)
 		{	//For each line in the vocal track
+			if(tp->line[linenum].difficulty != 0)
+				continue;	//If this line isn't in the main vocal set, skip it
+
 			for(lyricnum = ctr; lyricnum < tp->lyrics; lyricnum++)
 			{	//For each lyric at/after the one from the outer for loop
+				if(tp->lyric[lyricnum]->type != 0)
+					continue;	//If this lyric isn't in the main vocal set, skip it
+
 				if(tp->lyric[lyricnum]->pos > tp->line[linenum].end_pos)
 				{	//If this lyric and all subsequent ones are after the end of this lyric line
 					break;	//Stop processing this line

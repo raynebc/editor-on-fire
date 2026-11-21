@@ -5793,7 +5793,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 				{	//For each lyric
 					lyricptr = eof_song->vocal_track[0]->lyric[ctr2];
 					if(lyricptr->type != lineptr->difficulty)
-						continue;	//If this lyric isn't in the same difficulty as the line being examined, skip it
+						continue;	//If this lyric isn't in the same vocal set as the line being examined, skip it
 					if(lyricptr->pos > lineptr->end_pos)
 						break;	//If this and all remaining lyrics are after the end of the lyric line, stop checking lyrics for this line
 
@@ -5927,7 +5927,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		unsigned long target_diff;
 
 		eof_notes_macro_lyric_not_covered_in_prev_vocal_set[0] = '\0';	//Erase this string
-		if(eof_read_macro_number(count_string, &target_diff) && (target_diff > 0))
+		if(eof_read_macro_number(count_string, &target_diff) && (target_diff > 0) && (target_diff < 4))
 		{	//If the target vocal set number was successfully parsed and it is a valid parameter (can only target harmony vocal sets)
 			for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
 			{	//For each lyric
@@ -5947,7 +5947,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 				if(ctr2 >= eof_song->vocal_track[0]->lines)
 				{	//If the lyric was not found to be within the span of an appropriate lyric line
 					eof_notes_panel_print_time(lineptr->start_pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
-					snprintf(eof_notes_macro_lyric_not_covered_in_prev_vocal_set, sizeof(eof_notes_macro_lyric_not_covered_in_prev_vocal_set) - 1, "%spos %s : \"%s\"", voxtracknames[diff], time_string, lyricptr->text);	//Write a string identifying the offending lyric
+					snprintf(eof_notes_macro_lyric_not_covered_in_prev_vocal_set, sizeof(eof_notes_macro_lyric_not_covered_in_prev_vocal_set) - 1, "%spos %s : \"%s\"", voxtracknames[target_diff], time_string, lyricptr->text);	//Write a string identifying the offending lyric
 					dest_buffer[0] = '\0';
 					return 3;	//True
 				}

@@ -806,6 +806,7 @@ void eof_find_lyric_preview_lines(void)
 	int adj_eof_music_pos = EOF_SEEK_POS;	//The current seek position of the chart, adjusted for AV delay
 	unsigned target_set = eof_note_type_v;	//The vocal set to generate previews for
 	unsigned long eof_preview_line[2];
+	EOF_PHRASE_SECTION *lineptr;
 
 	eof_preview_line[0] = eof_preview_line[1] = 0;	//Clear the lyric preview lines
 	eof_preview_line_lyric[0] = eof_preview_line_lyric[1] = 0;
@@ -815,21 +816,23 @@ void eof_find_lyric_preview_lines(void)
 		target_set = 2;		//In Rock Band, HARM3 does not define its own lyric lines and uses those from HARM2 instead
 
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
-	{	//For each defined lyric line
-		if(eof_song->vocal_track[0]->line[i].difficulty != target_set)
+	{	//For each lyric line
+		lineptr = &eof_song->vocal_track[0]->line[i];	//Simplify
+		if(lineptr->difficulty != target_set)
 			continue;	//If this lyric line isn't in the active vocal set, skip it
-		if((adj_eof_music_pos >= eof_song->vocal_track[0]->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos))
+		if((adj_eof_music_pos >= lineptr->start_pos) && (adj_eof_music_pos <= lineptr->end_pos))
 		{	//If the seek position is within this line
 			current_line = i;	//Track this
 			break;
 		}
 	}
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
-	{	//For each defined lyric line
-		if(eof_song->vocal_track[0]->line[i].difficulty != target_set)
+	{	//For each lyric line
+		lineptr = &eof_song->vocal_track[0]->line[i];	//Simplify
+		if(lineptr->difficulty != target_set)
 			continue;	//If this lyric line isn't in the active vocal set, skip it
 
-		if(adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos)
+		if(adj_eof_music_pos <= lineptr->end_pos)
 		{	//If the seek position is at/before the line's end position
 			beyond = 0;
 			break;
@@ -868,38 +871,40 @@ void eof_find_lyric_preview_lines(void)
 		//Look for second lyric preview line
 		for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 		{	//For each lyric line
-			if(eof_song->vocal_track[0]->line[i].difficulty != target_set)
+			lineptr = &eof_song->vocal_track[0]->line[i];	//Simplify
+			if(lineptr->difficulty != target_set)
 				continue;	//If this lyric line isn't in the active vocal set, skip it
 
-			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (!dist || (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist)))
+			if((eof_song->vocal_track[0]->line[current_line].start_pos < lineptr->start_pos) && (!dist || (lineptr->start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist)))
 			{
 				next_line = i;
-				dist = eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos;
+				dist = lineptr->start_pos - eof_song->vocal_track[0]->line[current_line].start_pos;
 			}
 		}
 		if(next_line >= 0)
-		{
+		{	//If the timings for a second preview lyric line were found
 			//Build second lyric preview line
 			eof_preview_line[1] = next_line;
+			lineptr = &eof_song->vocal_track[0]->line[eof_preview_line[1]];	//Simplify
 			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 			{	//For each lyric
 				if(target_set != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, i))
 					continue;	//If the lyric doesn't apply to the active vocal set, skip it
 
-				if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos))
+				if((eof_song->vocal_track[0]->lyric[i]->pos >= lineptr->start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= lineptr->end_pos))
 				{
-					eof_preview_line_lyric[1] = i;
+					eof_preview_line_lyric[1] = i;	//Track the first lyric in this lyric line preview
 					for(j = i; j < eof_song->vocal_track[0]->lyrics; j++)
-					{	//For each lyric
-						if(target_set != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, i))
+					{	//For the same lyric and all remaining ones
+						if(target_set != eof_get_note_type(eof_song, EOF_TRACK_VOCALS, j))
 							continue;	//If the lyric doesn't apply to the active vocal set, skip it
 
-						if(eof_song->vocal_track[0]->lyric[j]->pos > eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos)
+						if(eof_song->vocal_track[0]->lyric[j]->pos > lineptr->end_pos)
 						{
 							break;
 						}
 					}
-					eof_preview_line_end_lyric[1] = j;
+					eof_preview_line_end_lyric[1] = j;	//Track the last lyric in this lyric line preview
 					break;
 				}
 			}
@@ -3504,6 +3509,8 @@ void eof_render_fret_catalog_window(void)
 					{	//If this lyric is after the end of the catalog entry
 						break;	//Stop processing lyrics
 					}
+					if(eof_song->vocal_track[tracknum]->lyric[i]->type != eof_note_type_v)
+						continue;	//If the lyric isn't in the active vocal set, skip it
 					if(eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos)
 					{	//If this lyric is in the catalog entry, render it
 						if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], i == eof_hover_note_2 ? 2 : 0, eof_window_info) > 0)

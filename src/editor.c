@@ -5646,15 +5646,18 @@ void eof_vocal_editor_logic(void)
 							if(eof_selection.range_pos_1 < eof_selection.range_pos_2)
 							{
 								for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-								{
+								{	//For each lyric
+									if(eof_song->vocal_track[tracknum]->lyric[i]->type != eof_note_type_v)
+										continue;	//If the lyric is not in the active vocal set, skip it
+
 									if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_selection.range_pos_1) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_selection.range_pos_2))
-									{
+									{	//If the lyric is in the range of the selection
 										if(eof_selection.track != EOF_TRACK_VOCALS)
 										{
 											eof_selection.track = EOF_TRACK_VOCALS;
 											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 										}
-										eof_selection.multi[i] = 1;
+										eof_selection.multi[i] = 1;	//Add the lyric to the selection
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 									}
 								}
@@ -5662,15 +5665,18 @@ void eof_vocal_editor_logic(void)
 							else
 							{
 								for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-								{
+								{	//For each lyric
+									if(eof_song->vocal_track[tracknum]->lyric[i]->type != eof_note_type_v)
+										continue;	//If the lyric is not in the active vocal set, skip it
+
 									if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_selection.range_pos_2) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_selection.range_pos_1))
-									{
+									{	//If the lyric is in the range of the selection
 										if(eof_selection.track != EOF_TRACK_VOCALS)
 										{
 											eof_selection.track = EOF_TRACK_VOCALS;
 											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 										}
-										eof_selection.multi[i] = 1;
+										eof_selection.multi[i] = 1;	//Add the lyric to the selection
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 									}
 								}
@@ -5857,7 +5863,7 @@ void eof_vocal_editor_logic(void)
 						{	//If notes are to be moved
 							eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, move_offset, move_direction, 0, &undo_made);	//Move lyric sections accordingly
 							for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-							{	//For each lyric in the track
+							{	//For each lyric
 								notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 								if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
 									continue;	//If this lyric is not selected, skip it
@@ -5901,9 +5907,9 @@ void eof_vocal_editor_logic(void)
 							if(revert)
 							{
 								for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-								{
+								{	//For each lyric
 									if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-									{
+									{	//If the lyric is selected
 										eof_song->vocal_track[tracknum]->lyric[i]->pos -= revert_amount;
 									}
 								}
@@ -6385,7 +6391,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	{ 	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
 		ptr = &eof_song->vocal_track[tracknum]->line[i];	//Simplify
 		if(ptr->difficulty != eof_note_type)
-			continue;	//If this lyric line isn't specific to the active vocal part, skip it
+			continue;	//If this lyric line isn't specific to the active vocal set, skip it
 
 		rectfill(window->screen, lpos + ptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, lpos + ptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (ptr->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
 	}
@@ -6394,7 +6400,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{	//For each lyric
 		if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i))
-			continue;	//If the lyric doesn't apply to the active vocal part, skip rendering it
+			continue;	//If the lyric doesn't apply to the active vocal set, skip rendering it
 
 		if(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length >= start)
 		{	//If the lyric would render at or after the left edge of the piano roll
@@ -8226,7 +8232,10 @@ void eof_editor_logic_common(void)
 
 		//Find the hover lyric, if there is one
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
-		{	//Find the hover lyric if there is one
+		{	//For each lyric
+			if(eof_song->vocal_track[0]->lyric[i]->type != eof_note_type_v)
+				continue;	//If this lyric isn't in the active vocal set, skip it
+
 			npos = eof_song->vocal_track[0]->lyric[i]->pos;
 			if((examined_music_pos - eof_av_delay > npos) && (examined_music_pos - eof_av_delay < npos + (eof_song->vocal_track[0]->lyric[i]->length > 100 ? eof_song->vocal_track[0]->lyric[i]->length : 100)))
 			{

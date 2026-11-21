@@ -388,7 +388,7 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 		if((format == RS_FORMAT) || (!tp->lines))
 		{	//If exporting to Rocksmith 1 format or if the lyrics don't have any lines defined
 			tp->lines = 0;		//Temporarily disregard any existing lyric lines
-			(void) eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1, 0, 0xFF, 0);	//Create a single line encompassing all lyrics
+			(void) eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1, 0, 0, 0);	//Create a single line encompassing all lyrics
 		}
 	}
 	else if(format == PLAIN_FORMAT)
